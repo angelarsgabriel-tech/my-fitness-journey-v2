@@ -589,9 +589,11 @@ async function saveMealPlan(e) {
 
 
 async function importMealPlanJSON() {
-  try {
+  const status = document.getElementById('planImportStatus');
   const input = document.getElementById('planImportJSON');
-  if (!input) return;
+  if (status) status.textContent = 'Botão acionado. Verificando o conteúdo...';
+  try {
+  if (!input) throw new Error('Campo de texto não encontrado. Atualize a página e tente novamente.');
   let items;
   try {
     items = JSON.parse(input.value);
@@ -628,11 +630,14 @@ async function importMealPlanJSON() {
   await refreshAllData();
   renderAll();
   showToast(`${newItems.length} refeições importadas para o seu plano!`, 'success');
+  if (status) status.textContent = `Pronto! ${newItems.length} refeições importadas.`;
   } catch (error) {
     console.error('Erro ao importar plano alimentar:', error);
+    if (status) status.textContent = `Erro na importação: ${error.message || error}`;
     showToast(`Não foi possível importar o plano: ${error.message || error}`, 'error');
   }
 }
+window.importMealPlanJSON = importMealPlanJSON;
 
 function editMealPlan(id) {
   const item = state.data.meal_plans.find(x => x.id === id);
