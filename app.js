@@ -648,6 +648,17 @@ function editMealPlan(id) {
   showToast('Editando orientação do plano alimentar.', 'info');
 }
 
+async function selectMealPlanOption(id, optionIndex) {
+  const item = state.data.meal_plans.find(x => x.id === id);
+  if (!item || !Array.isArray(item.options) || !item.options[optionIndex]) return;
+  item.selectedOption = optionIndex;
+  await idbPut('meal_plans', item);
+  await refreshAllData();
+  renderAll();
+  showToast(`Opção ${optionIndex + 1} selecionada para ${item.mealName}.`, 'success');
+}
+window.selectMealPlanOption = selectMealPlanOption;
+
 async function toggleMealPlanDone(id) {
   const item = state.data.meal_plans.find(x => x.id === id);
   if (!item) return;
@@ -737,7 +748,8 @@ function renderMealPlans() {
     const optionsHTML = structured ? item.options.map((option, optionIndex) => {
       const groups = Array.isArray(option.groups) ? option.groups : [];
       const foodsHTML = groups.map((group, groupIndex) => renderMealPlanFoodGroup(group, item.id, optionIndex, groupIndex)).join('<div class="plan-food-group"></div>');
-      return `<div class="plan-option"><strong>Opção ${optionIndex + 1}${option.label ? ': ' + escapeHTML(option.label) : ''}</strong><div class="record-meta">${foodsHTML}</div></div>`;
+      const selected = Number(item.selectedOption) === optionIndex;
+      return `<div class="plan-option"><strong>Opção ${optionIndex + 1}${option.label ? ': ' + escapeHTML(option.label) : ''}</strong> ${selected ? '<span class="badge badge-done">Selecionada</span>' : ''}<div class="record-meta">${foodsHTML}</div><button class="btn-secondary" type="button" onclick="selectMealPlanOption('${item.id}', ${optionIndex})">${selected ? 'Opção escolhida' : 'Escolher esta opção'}</button></div>`;
     }).join('') : '';
     return `
       <div class="record-item">
