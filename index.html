@@ -28,7 +28,6 @@
     <div class="nav-scroll">
       <button class="nav-btn active" data-tab="inicio" onclick="showTab('inicio', this)">🌷 Início</button>
       <button class="nav-btn" data-tab="alimentacao" onclick="showTab('alimentacao', this)">🍓 Alimentação</button>
-      <button class="nav-btn" data-tab="receitas" onclick="showTab('receitas', this)">🥗 Receitas</button>
       <button class="nav-btn" data-tab="exercicios" onclick="showTab('exercicios', this)">🧘 Exercícios</button>
       <button class="nav-btn" data-tab="agua" onclick="showTab('agua', this)">💧 Hidratação</button>
       <button class="nav-btn" data-tab="medidas" onclick="showTab('medidas', this)">📏 Peso e Medidas</button>
@@ -224,83 +223,7 @@
       </div>
     </section>
 
-    <!-- 4.3 RECEITAS -->
-    <section id="receitas" class="tab-section">
-      <div class="section-head">
-        <h2>Minhas receitas 🥗</h2>
-      </div>
-
-      <div class="card">
-        <h3>Cadastrar ou editar receita</h3>
-        <form id="recipeForm" class="form-grid">
-          <div>
-            <label for="recipeTitle">Nome da receita</label>
-            <input id="recipeTitle" type="text" required placeholder="Ex.: Panqueca de aveia e banana" />
-          </div>
-          <div>
-            <label for="recipeCategory">Categoria</label>
-            <select id="recipeCategory">
-              <option>Café da manhã</option>
-              <option>Almoço e Jantar</option>
-              <option>Lanches</option>
-              <option>Sobremesas saudáveis</option>
-              <option>Bebidas</option>
-              <option>Geral</option>
-            </select>
-          </div>
-          <div>
-            <label for="recipeTime">Tempo de preparo</label>
-            <input id="recipeTime" type="text" placeholder="Ex.: 15 minutos" />
-          </div>
-          <div>
-            <label for="recipeServings">Porções</label>
-            <input id="recipeServings" type="text" placeholder="Ex.: 2 porções" />
-          </div>
-          <div class="form-full">
-            <label for="recipeIngredients">Ingredientes e quantidades</label>
-            <textarea id="recipeIngredients" required placeholder="Liste os ingredientes e suas quantidades..."></textarea>
-          </div>
-          <div class="form-full">
-            <label for="recipeInstructions">Modo de preparo</label>
-            <textarea id="recipeInstructions" required placeholder="Descreva o passo a passo..."></textarea>
-          </div>
-          <div class="form-full">
-            <label for="recipeNutrition">Informações nutricionais (quando conhecidas)</label>
-            <input id="recipeNutrition" type="text" placeholder="Ex.: Conforme rótulo ou cálculo próprio" />
-          </div>
-          <div class="form-full btn-row">
-            <button id="recipeSubmitBtn" type="submit" class="btn-primary">Salvar receita</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <h3>Receitas salvas</h3>
-        <div class="form-grid" style="margin-bottom: 10px;">
-          <div>
-            <label for="recipeFilterCategory">Filtrar por categoria</label>
-            <select id="recipeFilterCategory" onchange="renderRecipes()">
-              <option value="Todas">Todas</option>
-              <option>Café da manhã</option>
-              <option>Almoço e Jantar</option>
-              <option>Lanches</option>
-              <option>Sobremesas saudáveis</option>
-              <option>Bebidas</option>
-              <option>Geral</option>
-            </select>
-          </div>
-          <div style="display: flex; align-items: flex-end; padding-bottom: 8px;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
-              <input id="recipeFilterFav" type="checkbox" style="width: auto; margin: 0;" onchange="renderRecipes()" />
-              Mostrar apenas favoritas
-            </label>
-          </div>
-        </div>
-        <div id="recipeList"></div>
-      </div>
-    </section>
-
-    <!-- 4.5 EXERCÍCIOS -->    <section id="exercicios" class="tab-section">
+    <!-- 4.3 EXERCÍCIOS -->    <section id="exercicios" class="tab-section">
       <div class="section-head">
         <h2>Atividades físicas 🧘</h2>
       </div>
