@@ -278,12 +278,22 @@ function updateNetworkStatus() {
   }
 }
 
+function normalizeMealGroupKey(value) {
+  return String(value || 'Refeição')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase('pt-BR');
+}
+
 function groupFoodEntriesByMeal(items) {
   const groups = new Map();
   for (const item of items) {
-    const mealLabel = String(item.meal || 'Refeição').trim() || 'Refeição';
-    const key = String(item.date || '') + '::' + mealLabel.toLocaleLowerCase('pt-BR');
-    if (!groups.has(key)) groups.set(key, { date: item.date || '', meal: mealLabel, items: [], calories: 0, protein: 0, carbs: 0, fat: 0 });
+    const mealLabel = String(item.meal || 'Refeição').trim().replace(/\s+/g, ' ') || 'Refeição';
+    const dateKey = String(item.date || '').trim();
+    const key = dateKey + '::' + normalizeMealGroupKey(mealLabel);
+    if (!groups.has(key)) groups.set(key, { date: dateKey, meal: mealLabel, items: [], calories: 0, protein: 0, carbs: 0, fat: 0 });
     const group = groups.get(key);
     group.items.push(item);
     group.calories += Number(item.calories) || 0;
@@ -1295,7 +1305,7 @@ function renderCalendarAndReminders() {
     <div class="metrics-grid-2">
       <div class="metric-box">
         <span class="metric-label">Refeições em ${formatDateBR(selDate)}</span>
-        <span class="metric-value">${dayFoods.length}</span>
+        <span class="metric-value">${groupFoodEntriesByMeal(dayFoods).length}</span>
         <span class="metric-sub">${Math.round(kcalSum)} kcal registrados</span>
       </div>
       <div class="metric-box nude-box">
