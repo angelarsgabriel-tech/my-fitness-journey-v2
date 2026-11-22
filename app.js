@@ -847,6 +847,8 @@ async function toggleRecipeFavorite(id) {
 }
 
 function renderRecipes() {
+  const recipeList = document.getElementById('recipeList');
+  if (!recipeList) return; // A aba de receitas foi removida; preserva os dados locais.
   const catFilter = document.getElementById('recipeFilterCategory').value;
   const onlyFav = document.getElementById('recipeFilterFav').checked;
 
@@ -1553,7 +1555,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       await importMealPlanJSON();
     });
   }
-  document.getElementById('recipeForm').addEventListener('submit', saveRecipe);
   document.getElementById('workoutForm').addEventListener('submit', saveWorkout);
   document.getElementById('waterGoalForm').addEventListener('submit', saveWaterGoal);
   document.getElementById('waterForm').addEventListener('submit', saveWater);
