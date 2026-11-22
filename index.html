@@ -166,6 +166,31 @@
         <div id="foodList"></div>
       </div>
 
+      <div class="card">
+        <h3>Buscar alimento e calcular nutrientes automaticamente 🔎</h3>
+        <p class="date-caption">Pesquise na TACO (alimentos e preparações brasileiras) ou no Open Food Facts (produtos industrializados). Os valores são estimativas por porção e podem ser conferidos e ajustados antes de salvar.</p>
+        <form id="foodSearchForm" class="form-grid">
+          <div class="form-full">
+            <label for="foodSearchQuery">Nome do alimento ou produto</label>
+            <input id="foodSearchQuery" type="search" placeholder="Ex.: uva, arroz integral, Iog Pro Danone" autocomplete="off" required />
+          </div>
+          <div>
+            <label for="foodSearchSource">Fonte</label>
+            <select id="foodSearchSource">
+              <option value="all">Todas as fontes</option>
+              <option value="taco">TACO</option>
+              <option value="off">Produtos industrializados</option>
+            </select>
+          </div>
+          <div class="btn-row" style="align-items:end">
+            <button id="foodSearchButton" type="submit" class="btn-primary">Buscar alimentos</button>
+          </div>
+        </form>
+        <div id="foodSearchStatus" class="info-banner" aria-live="polite">A busca online precisa de internet. Seus alimentos favoritos continuam disponíveis no catálogo pessoal.</div>
+        <div id="foodSearchResults"></div>
+        <div id="foodFavorites"></div>
+      </div>
+
       <div class="card card-nude">
         <h3>Cadastro de alimentos (catálogo pessoal)</h3>
         <form id="catalogFoodForm" class="form-grid">
