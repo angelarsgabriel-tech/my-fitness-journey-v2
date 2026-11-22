@@ -80,8 +80,13 @@ function escapeHTML(str) {
 }
 
 function showToast(message, type = 'info') {
-  const container = document.getElementById('toastContainer');
-  if (!container) return;
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.textContent = message;
@@ -139,11 +144,37 @@ function idbGetAll(storeName) {
 
 function idbPut(storeName, item) {
   return new Promise((resolve, reject) => {
+    let result;
+    let settled = false;
     const tx = state.db.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
     const req = store.put(item);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+
+    req.onsuccess = () => { result = req.result; };
+    req.onerror = () => {
+      if (!settled) {
+        settled = true;
+        reject(req.error || new Error('Falha ao gravar o registro.'));
+      }
+    };
+    tx.oncomplete = () => {
+      if (!settled) {
+        settled = true;
+        resolve(result);
+      }
+    };
+    tx.onerror = () => {
+      if (!settled) {
+        settled = true;
+        reject(tx.error || new Error('Erro na transação do banco local.'));
+      }
+    };
+    tx.onabort = () => {
+      if (!settled) {
+        settled = true;
+        reject(tx.error || new Error('A gravação foi cancelada pelo banco local.'));
+      }
+    };
   });
 }
 
@@ -379,44 +410,48 @@ function useCatalogFoodInMeal(id) {
 
 async function saveMeal(e) {
   e.preventDefault();
-  const meal = document.getElementById('meal').value;
-  const name = document.getElementById('foodName').value.trim();
-  const amount = document.getElementById('foodAmount').value.trim();
-  const unit = document.getElementById('foodUnit').value.trim();
-  const calories = Number(document.getElementById('foodCalories').value);
-  const protein = Number(document.getElementById('protein').value) || 0;
-  const carbs = Number(document.getElementById('carbs').value) || 0;
-  const fat = Number(document.getElementById('fat').value) || 0;
-  const date = document.getElementById('foodDate').value || todayISO();
+  try {
+    const meal = document.getElementById('meal').value;
+    const name = document.getElementById('foodName').value.trim();
+    const amount = document.getElementById('foodAmount').value.trim();
+    const unit = document.getElementById('foodUnit').value.trim();
+    const calories = Number(document.getElementById('foodCalories').value);
+    const protein = Number(document.getElementById('protein').value) || 0;
+    const carbs = Number(document.getElementById('carbs').value) || 0;
+    const fat = Number(document.getElementById('fat').value) || 0;
+    const date = document.getElementById('foodDate').value || todayISO();
 
-  if (!name) return showToast('Informe o nome do alimento ou refeição.', 'error');
-  if (Number.isNaN(calories) || calories < 0) return showToast('Calorias inválidas.', 'error');
+    if (!name) return showToast('Informe o nome do alimento ou refeição.', 'error');
+    if (Number.isNaN(calories) || calories < 0) return showToast('Calorias inválidas.', 'error');
 
-  const editingId = state.editing.foods;
-  const record = {
-    id: editingId || uid(),
-    meal,
-    name,
-    amount,
-    unit,
-    calories,
-    protein,
-    carbs,
-    fat,
-    source: document.getElementById('foodCalories').dataset.source || '',
-    date
-  };
+    const editingId = state.editing.foods;
+    const record = {
+      id: editingId || uid(),
+      meal,
+      name,
+      amount,
+      unit,
+      calories,
+      protein,
+      carbs,
+      fat,
+      source: document.getElementById('foodCalories').dataset.source || '',
+      date
+    };
 
-  await idbPut('foods', record);
-  state.editing.foods = null;
-  document.getElementById('foodForm').reset();
-  document.getElementById('foodDate').value = date;
-  document.getElementById('foodSubmitBtn').textContent = 'Salvar registro de refeição';
-  await refreshAllData();
-  renderAll();
-  showToast(editingId ? 'Refeição atualizada!' : 'Refeição registrada!', 'success');
+    await idbPut('foods', record);
+    state.editing.foods = null;
+    document.getElementById('foodForm').reset();
+    document.getElementById('foodDate').value = date;
+    document.getElementById('foodSubmitBtn').textContent = 'Salvar registro de refeição';
+    await refreshAllData();
+    renderAll();
+    showToast(editingId ? 'Refeição atualizada!' : 'Refeição registrada!', 'success');
+  } catch (err) {
+    console.error('Erro ao salvar refeição:', err);
+    showToast(`Não foi possível salvar a refeição: ${err.message || err}`, 'error');
+  }
 }
-
 function editMeal(id) {
   const item = state.data.foods.find(x => x.id === id);
   if (!item) return;
@@ -776,33 +811,37 @@ async function clearWaterGoal() {
 
 async function saveWater(e) {
   e.preventDefault();
-  const amount = Number(document.getElementById('waterAmount').value);
-  const date = document.getElementById('waterDate').value || todayISO();
-  const time = document.getElementById('waterTime').value || nowTimeHHMM();
+  try {
+    const amount = Number(document.getElementById('waterAmount').value);
+    const date = document.getElementById('waterDate').value || todayISO();
+    const time = document.getElementById('waterTime').value || nowTimeHHMM();
 
-  if (!amount || amount <= 0) {
-    return showToast('Informe uma quantidade de água válida em ml.', 'error');
+    if (!amount || amount <= 0) {
+      return showToast('Informe uma quantidade de água válida em ml.', 'error');
+    }
+
+    const editingId = state.editing.water;
+    const record = {
+      id: editingId || uid(),
+      amount,
+      date,
+      time
+    };
+
+    await idbPut('water', record);
+    state.editing.water = null;
+    document.getElementById('waterForm').reset();
+    document.getElementById('waterDate').value = todayISO();
+    document.getElementById('waterTime').value = nowTimeHHMM();
+    document.getElementById('waterSubmitBtn').textContent = 'Registrar água';
+    await refreshAllData();
+    renderAll();
+    showToast(editingId ? 'Registro de água atualizado!' : 'Água registrada!', 'success');
+  } catch (err) {
+    console.error('Erro ao salvar água:', err);
+    showToast(`Não foi possível salvar a água: ${err.message || err}`, 'error');
   }
-
-  const editingId = state.editing.water;
-  const record = {
-    id: editingId || uid(),
-    amount,
-    date,
-    time
-  };
-
-  await idbPut('water', record);
-  state.editing.water = null;
-  document.getElementById('waterForm').reset();
-  document.getElementById('waterDate').value = todayISO();
-  document.getElementById('waterTime').value = nowTimeHHMM();
-  document.getElementById('waterSubmitBtn').textContent = 'Registrar água';
-  await refreshAllData();
-  renderAll();
-  showToast(editingId ? 'Registro de água atualizado!' : 'Água registrada!', 'success');
 }
-
 function editWater(id) {
   const item = state.data.water.find(x => x.id === id);
   if (!item) return;
