@@ -1456,8 +1456,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('catalogFoodForm').addEventListener('submit', saveCatalogFood);
   document.getElementById('foodForm').addEventListener('submit', saveMeal);
   document.getElementById('mealPlanForm').addEventListener('submit', saveMealPlan);
-  const planImportBtn = document.getElementById('planImportBtn');
-  if (planImportBtn) planImportBtn.addEventListener('click', importMealPlanJSON);
   document.getElementById('recipeForm').addEventListener('submit', saveRecipe);
   document.getElementById('workoutForm').addEventListener('submit', saveWorkout);
   document.getElementById('waterGoalForm').addEventListener('submit', saveWaterGoal);
