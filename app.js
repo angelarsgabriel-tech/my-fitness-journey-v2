@@ -691,20 +691,25 @@ async function lookupPlanFoodTaco(planId, optionIndex, groupIndex, foodIndex) {
   const food = record?.options?.[optionIndex]?.groups?.[groupIndex]?.items?.[foodIndex];
   const target = document.getElementById(`planTacoResults-${planId}-${optionIndex}-${groupIndex}-${foodIndex}`);
   if (!food || !target) return;
-  target.textContent = 'Consultando a tabela TACO...';
+  target.textContent = 'Consultando TACO e produtos...';
   try {
-    const results = await searchTacoFoods(food.name);
+    const tacoResults = await searchTacoFoods(food.name);
+    const productResults = await searchOpenFoodFacts(food.name).catch(() => []);
+    const results = [
+      ...tacoResults.map(item => ({...item, lookupSource:'TACO'})),
+      ...productResults.map(item => ({...item, lookupSource:'Open Food Facts'}))
+    ];
     const key = [planId, optionIndex, groupIndex, foodIndex].join('|');
     planTacoSearchResults[key] = results;
     if (!results.length) {
-      target.textContent = 'Não encontrei correspondência na TACO. Não vou atribuir valores aproximados.';
+      target.textContent = 'Não encontrei correspondência confiável. Confira o nome ou use os dados do rótulo; nenhum valor foi inventado.';
       return;
     }
-    target.innerHTML = '<small>Selecione o alimento correto na tabela:</small>' + results.map((result, index) =>
-      `<button class="btn-secondary" type="button" onclick="selectPlanTacoFood('${planId}', ${optionIndex}, ${groupIndex}, ${foodIndex}, ${index})">${escapeHTML(result.description || result.name || 'Alimento')}</button>`
+    target.innerHTML = '<small>Selecione a correspondência correta (os valores são por 100 g):</small>' + results.slice(0,12).map((result, index) =>
+      `<button class="btn-secondary" type="button" onclick="selectPlanTacoFood('${planId}', ${optionIndex}, ${groupIndex}, ${foodIndex}, ${index})">${escapeHTML(result.description || result.name || 'Alimento')} · ${escapeHTML(result.lookupSource)}</button>`
     ).join('');
   } catch (error) {
-    target.textContent = `Falha na consulta TACO: ${error.message || error}`;
+    target.textContent = `Falha na consulta nutricional: ${error.message || error}`;
   }
 }
 
@@ -713,7 +718,9 @@ async function selectPlanTacoFood(planId, optionIndex, groupIndex, foodIndex, re
   const selected = planTacoSearchResults[key]?.[resultIndex];
   if (!selected) return;
   try {
-    const nutrition = await getTacoNutrition(selected.id);
+    const nutrition = selected.lookupSource === 'TACO'
+      ? await getTacoNutrition(selected.id)
+      : selected;
     const record = state.data.meal_plans.find(x => x.id === planId);
     const food = record?.options?.[optionIndex]?.groups?.[groupIndex]?.items?.[foodIndex];
     if (!food) return;
@@ -722,19 +729,20 @@ async function selectPlanTacoFood(planId, optionIndex, groupIndex, foodIndex, re
       protein: nutrition.protein,
       carbs: nutrition.carbs,
       fat: nutrition.fat,
-      source: 'TACO · por 100 g',
-      tacoId: String(selected.id),
-      tacoName: nutrition.name
+      source: selected.lookupSource === 'TACO' ? 'TACO · por 100 g' : 'Open Food Facts · por 100 g',
+      sourceId: String(nutrition.sourceId || selected.id || ''),
+      sourceName: nutrition.name || nutrition.description || ''
     };
     await idbPut('meal_plans', record);
     await refreshAllData();
     renderAll();
-    showToast('Composição TACO vinculada ao alimento (valores por 100 g).', 'success');
+    showToast('Composição nutricional vinculada. Os valores-base são por 100 g.', 'success');
   } catch (error) {
-    showToast(`Não foi possível vincular a TACO: ${error.message || error}`, 'error');
+    showToast(`Não foi possível vincular a composição: ${error.message || error}`, 'error');
   }
 }
 window.lookupPlanFoodTaco = lookupPlanFoodTaco;
+window.selectPlanTacoFood = selectPlanTacoFood;
 window.selectPlanTacoFood = selectPlanTacoFood;
 
 function renderMealPlans() {
