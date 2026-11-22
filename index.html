@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#e8aeba" />
-  <meta name="description" content="My Fitness Journey V2 — Aplicativo pessoal offline para acompanhar alimentação, hidratação, exercícios, evolução física, receitas, plano alimentar e lembretes." />
+  <meta name="description" content="My Fitness Journey V2 — Aplicativo pessoal offline para acompanhar alimentação, hidratação, exercícios, evolução física, receitas e lembretes." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Fitness Journey" />
@@ -28,7 +28,6 @@
     <div class="nav-scroll">
       <button class="nav-btn active" data-tab="inicio" onclick="showTab('inicio', this)">🌷 Início</button>
       <button class="nav-btn" data-tab="alimentacao" onclick="showTab('alimentacao', this)">🍓 Alimentação</button>
-      <button class="nav-btn" data-tab="plano" onclick="showTab('plano', this)">📋 Plano Alimentar</button>
       <button class="nav-btn" data-tab="receitas" onclick="showTab('receitas', this)">🥗 Receitas</button>
       <button class="nav-btn" data-tab="exercicios" onclick="showTab('exercicios', this)">🧘 Exercícios</button>
       <button class="nav-btn" data-tab="agua" onclick="showTab('agua', this)">💧 Hidratação</button>
@@ -83,7 +82,6 @@
               <button class="shortcut-btn" onclick="showTab('agua')">+ Água</button>
               <button class="shortcut-btn" onclick="showTab('exercicios')">+ Exercício</button>
               <button class="shortcut-btn" onclick="showTab('medidas')">+ Medição</button>
-              <button class="shortcut-btn" onclick="showTab('plano')">Plano Alimentar</button>
               <button class="shortcut-btn" onclick="showTab('relatorios')">Ver Relatórios</button>
             </div>
           </div>
@@ -226,72 +224,7 @@
       </div>
     </section>
 
-    <!-- 4.3 PLANO ALIMENTAR E NUTRICIONISTA -->
-    <section id="plano" class="tab-section">
-      <div class="section-head">
-        <h2>Plano alimentar e nutricionista 📋</h2>
-      </div>
-
-      <div class="info-banner">
-        Registre aqui exatamente as refeições, quantidades e orientações fornecidas por você ou pela sua nutricionista. O aplicativo não cria ou sugere dietas automaticamente.
-      </div>
-
-      <div class="card">
-        <h3>Cadastrar refeição ou orientação do plano</h3>
-        <form id="mealPlanForm" class="form-grid">
-          <div>
-            <label for="planDay">Dia / Planejamento</label>
-            <select id="planDay">
-              <option>Diário</option>
-              <option>Segunda-feira</option>
-              <option>Terça-feira</option>
-              <option>Quarta-feira</option>
-              <option>Quinta-feira</option>
-              <option>Sexta-feira</option>
-              <option>Sábado</option>
-              <option>Domingo</option>
-            </select>
-          </div>
-          <div>
-            <label for="planMealName">Refeição</label>
-            <input id="planMealName" type="text" required placeholder="Ex.: Café da manhã, Lanche da tarde" />
-          </div>
-          <div class="form-full">
-            <label for="planFoods">Alimentos recomendados</label>
-            <textarea id="planFoods" required placeholder="Ex.: Ovos mexidos, pão integral, mamão"></textarea>
-          </div>
-          <div class="form-full">
-            <label for="planQuantities">Quantidades</label>
-            <input id="planQuantities" type="text" placeholder="Ex.: 2 ovos, 2 fatias, 100 g" />
-          </div>
-          <div class="form-full">
-            <label for="planGuidance">Orientações da nutricionista / observações</label>
-            <textarea id="planGuidance" placeholder="Orientações específicas do seu plano..."></textarea>
-          </div>
-          <div class="form-full btn-row">
-            <button id="planSubmitBtn" type="submit" class="btn-primary">Salvar item do plano</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <h3>Importar plano alimentar</h3>
-        <p class="muted">Cole aqui o conteúdo JSON do seu plano. Ele será salvo somente no banco local deste dispositivo, sem ficar gravado no código público do aplicativo.</p>
-        <label for="planImportJSON">Conteúdo do plano</label>
-        <textarea id="planImportJSON" rows="7" placeholder="Cole aqui o conteúdo do plano alimentar..."></textarea>
-        <div class="btn-row">
-          <button id="planImportBtn" type="button" formnovalidate class="btn-primary">Importar plano para este dispositivo</button>
-        <p id="planImportStatus" class="muted" role="status" aria-live="polite">Aguardando o conteúdo do plano.</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Planejamento e acompanhamento</h3>
-        <div id="mealPlanList"></div>
-      </div>
-    </section>
-
-    <!-- 4.4 RECEITAS -->
+    <!-- 4.3 RECEITAS -->
     <section id="receitas" class="tab-section">
       <div class="section-head">
         <h2>Minhas receitas 🥗</h2>
