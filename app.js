@@ -1365,6 +1365,7 @@ function renderAll() {
   renderWater();
   renderBodyModule();
   renderCalendarAndReminders();
+  generateReport();
 }
 
 function registerServiceWorker() {
