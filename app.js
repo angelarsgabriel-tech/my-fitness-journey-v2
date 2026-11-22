@@ -278,6 +278,22 @@ function updateNetworkStatus() {
   }
 }
 
+function groupFoodEntriesByMeal(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const mealLabel = String(item.meal || 'Refeição').trim() || 'Refeição';
+    const key = String(item.date || '') + '::' + mealLabel.toLocaleLowerCase('pt-BR');
+    if (!groups.has(key)) groups.set(key, { date: item.date || '', meal: mealLabel, items: [], calories: 0, protein: 0, carbs: 0, fat: 0 });
+    const group = groups.get(key);
+    group.items.push(item);
+    group.calories += Number(item.calories) || 0;
+    group.protein += Number(item.protein) || 0;
+    group.carbs += Number(item.carbs) || 0;
+    group.fat += Number(item.fat) || 0;
+  }
+  return [...groups.values()];
+}
+
 /* ---------- 4.1 Dashboard ---------- */
 function renderDashboard() {
   const today = todayISO();
@@ -304,21 +320,23 @@ function renderDashboard() {
   document.getElementById('dashMacros').textContent = `P: ${totalProt.toFixed(1)}g · C: ${totalCarb.toFixed(1)}g · G: ${totalFat.toFixed(1)}g`;
   document.getElementById('dashWater').textContent = `${totalWater} ml`;
   document.getElementById('dashWaterGoal').textContent = waterGoal ? `Meta definida: ${waterGoal} ml (${Math.min(100, Math.round((totalWater / waterGoal) * 100))}%)` : 'Sem meta definida';
-  document.getElementById('dashMeals').textContent = String(foodsToday.length);
+  const mealsToday = groupFoodEntriesByMeal(foodsToday);
+  document.getElementById('dashMeals').textContent = String(mealsToday.length);
   document.getElementById('dashWorkouts').textContent = String(workoutsToday.length);
   document.getElementById('dashWorkoutMin').textContent = `${totalWorkoutMin} min hoje`;
   document.getElementById('dashLatestWeight').textContent = latestWeight;
 
-  // Resumo rápido do dia
+  // Resumo rápido: agrupa alimentos da mesma refeição e data
   const mealsSummaryEl = document.getElementById('dashMealsSummary');
-  if (!foodsToday.length) {
+  if (!mealsToday.length) {
     mealsSummaryEl.innerHTML = '<small>Nenhuma refeição registrada hoje ainda.</small>';
   } else {
-    mealsSummaryEl.innerHTML = foodsToday.map(f => `
+    mealsSummaryEl.innerHTML = mealsToday.map(group => `
       <div class="record-item">
         <div class="record-body">
-          <div class="record-title">${escapeHTML(f.meal)} · ${escapeHTML(f.name)}</div>
-          <div class="record-meta">${escapeHTML(f.amount || 'Porção não informada')} — ${Number(f.calories) || 0} kcal (P: ${Number(f.protein) || 0}g · C: ${Number(f.carbs) || 0}g · G: ${Number(f.fat) || 0}g)</div>
+          <div class="record-title">${escapeHTML(group.meal)} · ${group.items.length} ${group.items.length === 1 ? 'alimento' : 'alimentos'}</div>
+          <div class="record-meta">${group.items.map(item => escapeHTML(item.name)).join(' · ')}</div>
+          <div class="record-meta">${Math.round(group.calories)} kcal (P: ${group.protein.toFixed(1)}g · C: ${group.carbs.toFixed(1)}g · G: ${group.fat.toFixed(1)}g)</div>
         </div>
       </div>
     `).join('');
@@ -1105,6 +1123,7 @@ function generateReport() {
   const totalFat = foods.reduce((s, x) => s + (Number(x.fat) || 0), 0);
   const totalWater = water.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const totalWorkoutMin = workouts.reduce((s, x) => s + (Number(x.duration) || 0), 0);
+  const mealCount = groupFoodEntriesByMeal(foods).length;
 
   const weights = body.filter(x => x.weight !== '' && x.weight !== undefined && !Number.isNaN(Number(x.weight)));
   const firstW = weights.length ? Number(weights[0].weight) : null;
@@ -1124,7 +1143,7 @@ function generateReport() {
     `Período: ${period === 'all' ? 'Todos os registros' : period === '7d' ? 'Últimos 7 dias' : 'Últimos 30 dias'}`,
     `Gerado em: ${formatDateBR(todayISO())}`,
     `----------------------------------------`,
-    `ALIMENTAÇÃO (${foods.length} registros):`,
+    `ALIMENTAÇÃO (${mealCount} refeições | ${foods.length} alimentos registrados):`,
     `- Calorias registradas: ${Math.round(totalKcal)} kcal`,
     `- Proteínas: ${totalProt.toFixed(1)} g | Carboidratos: ${totalCarb.toFixed(1)} g | Gorduras: ${totalFat.toFixed(1)} g`,
     ``,
