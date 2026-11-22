@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mfj-v2-cache-v17';
+const CACHE_NAME = 'mfj-v2-cache-v18';
 const ASSETS = [
   './',
   './index.html',
