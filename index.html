@@ -275,6 +275,16 @@
       </div>
 
       <div class="card">
+        <h3>Importar plano alimentar</h3>
+        <p class="muted">Cole aqui o conteúdo JSON do seu plano. Ele será salvo somente no banco local deste dispositivo, sem ficar gravado no código público do aplicativo.</p>
+        <label for="planImportJSON">Conteúdo do plano</label>
+        <textarea id="planImportJSON" rows="7" placeholder="Cole aqui o conteúdo do plano alimentar..."></textarea>
+        <div class="btn-row">
+          <button type="button" class="btn-primary" onclick="importMealPlanJSON()">Importar plano para este dispositivo</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h3>Planejamento e acompanhamento</h3>
         <div id="mealPlanList"></div>
       </div>
