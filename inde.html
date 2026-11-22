@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#e8aeba" />
+  <meta name="description" content="My Fitness Journey V2 — Aplicativo pessoal offline para acompanhar alimentação, hidratação, exercícios, evolução física, receitas, plano alimentar e lembretes." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Fitness Journey" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>My Fitness Journey V2</title>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <h1>🌸 My Fitness Journey</h1>
+      <p>Um passo de cada vez, cuidando de mim com leveza e constância.</p>
+      <div id="networkStatus" class="header-status">🌸 Modo Offline ativo · Tudo salvo no dispositivo</div>
+    </div>
+  </header>
+
+  <nav class="app-nav" aria-label="Navegação principal">
+    <div class="nav-scroll">
+      <button class="nav-btn active" data-tab="inicio" onclick="showTab('inicio', this)">🌷 Início</button>
+      <button class="nav-btn" data-tab="alimentacao" onclick="showTab('alimentacao', this)">🍓 Alimentação</button>
+      <button class="nav-btn" data-tab="plano" onclick="showTab('plano', this)">📋 Plano Alimentar</button>
+      <button class="nav-btn" data-tab="receitas" onclick="showTab('receitas', this)">🥗 Receitas</button>
+      <button class="nav-btn" data-tab="exercicios" onclick="showTab('exercicios', this)">🧘 Exercícios</button>
+      <button class="nav-btn" data-tab="agua" onclick="showTab('agua', this)">💧 Hidratação</button>
+      <button class="nav-btn" data-tab="medidas" onclick="showTab('medidas', this)">📏 Peso e Medidas</button>
+      <button class="nav-btn" data-tab="relatorios" onclick="showTab('relatorios', this)">📊 Relatórios</button>
+      <button class="nav-btn" data-tab="calendario" onclick="showTab('calendario', this)">🗓️ Lembretes</button>
+      <button class="nav-btn" data-tab="backup" onclick="showTab('backup', this)">🔐 Backup</button>
+    </div>
+  </nav>
+
+  <main class="app-main">
+    <!-- 4.1 DASHBOARD -->
+    <section id="inicio" class="tab-section active">
+      <div class="section-head">
+        <h2>Meu resumo diário 🌷</h2>
+        <p id="dashTodayText" class="date-caption"></p>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <span class="metric-label">Calorias consumidas</span>
+          <span id="dashCalories" class="metric-value">0 kcal</span>
+          <span id="dashMacros" class="metric-sub">P: 0.0g · C: 0.0g · G: 0.0g</span>
+        </div>
+        <div class="metric-box nude-box">
+          <span class="metric-label">Água consumida hoje</span>
+          <span id="dashWater" class="metric-value">0 ml</span>
+          <span id="dashWaterGoal" class="metric-sub">Sem meta definida</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Refeições registradas</span>
+          <span id="dashMeals" class="metric-value">0</span>
+          <span class="metric-sub">Hoje</span>
+        </div>
+        <div class="metric-box nude-box">
+          <span class="metric-label">Exercícios &amp; Peso</span>
+          <span id="dashWorkouts" class="metric-value">0</span>
+          <span id="dashWorkoutMin" class="metric-sub">0 min hoje</span>
+        </div>
+      </div>
+
+      <div class="card card-nude" style="margin-top: 14px;">
+        <div class="metrics-grid-2">
+          <div>
+            <span class="metric-label">Peso mais recente registrado</span>
+            <span id="dashLatestWeight" class="metric-value">—</span>
+          </div>
+          <div>
+            <span class="metric-label">Atalhos rápidos</span>
+            <div class="shortcuts-grid">
+              <button class="shortcut-btn" onclick="showTab('alimentacao')">+ Refeição</button>
+              <button class="shortcut-btn" onclick="showTab('agua')">+ Água</button>
+              <button class="shortcut-btn" onclick="showTab('exercicios')">+ Exercício</button>
+              <button class="shortcut-btn" onclick="showTab('medidas')">+ Medição</button>
+              <button class="shortcut-btn" onclick="showTab('plano')">Plano Alimentar</button>
+              <button class="shortcut-btn" onclick="showTab('relatorios')">Ver Relatórios</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Refeições de hoje</h3>
+        <div id="dashMealsSummary"></div>
+      </div>
+
+      <div class="card">
+        <h3>Atividades físicas de hoje</h3>
+        <div id="dashWorkoutsSummary"></div>
+      </div>
+    </section>
+
+    <!-- 4.2 DIÁRIO ALIMENTAR + CATÁLOGO DE ALIMENTOS -->
+    <section id="alimentacao" class="tab-section">
+      <div class="section-head">
+        <h2>Diário alimentar 🍓</h2>
+      </div>
+
+      <div class="card">
+        <h3>Registrar refeição</h3>
+        <form id="foodForm" class="form-grid">
+          <div>
+            <label for="meal">Refeição</label>
+            <select id="meal">
+              <option>Café da manhã</option>
+              <option>Almoço</option>
+              <option>Jantar</option>
+              <option>Lanches</option>
+              <option>Ceia</option>
+            </select>
+          </div>
+          <div>
+            <label for="foodDate">Data</label>
+            <input id="foodDate" type="date" required />
+          </div>
+          <div class="form-full">
+            <label for="foodName">Alimento</label>
+            <input id="foodName" type="text" required placeholder="Ex.: Aveia em flocos, Banana prata" />
+          </div>
+          <div>
+            <label for="foodAmount">Quantidade</label>
+            <input id="foodAmount" type="text" placeholder="Ex.: 100, 1, 2" />
+          </div>
+          <div>
+            <label for="foodUnit">Unidade de medida</label>
+            <input id="foodUnit" type="text" placeholder="Ex.: g, ml, unidade, colher de sopa" />
+          </div>
+          <div>
+            <label for="foodCalories">Calorias (kcal)</label>
+            <input id="foodCalories" type="number" min="0" step="1" placeholder="0" />
+          </div>
+          <div>
+            <label for="protein">Proteínas (g)</label>
+            <input id="protein" type="number" min="0" step="0.1" placeholder="0" />
+          </div>
+          <div>
+            <label for="carbs">Carboidratos (g)</label>
+            <input id="carbs" type="number" min="0" step="0.1" placeholder="0" />
+          </div>
+          <div>
+            <label for="fat">Gorduras (g)</label>
+            <input id="fat" type="number" min="0" step="0.1" placeholder="0" />
+          </div>
+          <div class="form-full btn-row">
+            <button id="foodSubmitBtn" type="submit" class="btn-primary">Salvar registro de refeição</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Histórico e totais por data</h3>
+        <label for="foodFilterDate">Consultar data</label>
+        <input id="foodFilterDate" type="date" onchange="renderFoodModule()" />
+        <div id="foodDayTotals" class="info-banner"></div>
+        <div id="foodList"></div>
+      </div>
+
+      <div class="card card-nude">
+        <h3>Cadastro de alimentos (catálogo pessoal)</h3>
+        <form id="catalogFoodForm" class="form-grid">
+          <div>
+            <label for="catFoodName">Nome do alimento</label>
+            <input id="catFoodName" type="text" required placeholder="Ex.: Iogurte natural" />
+          </div>
+          <div>
+            <label for="catFoodUnit">Porção / Unidade padrão</label>
+            <input id="catFoodUnit" type="text" placeholder="Ex.: 170 g (1 pote)" />
+          </div>
+          <div>
+            <label for="catFoodCalories">Calorias (kcal)</label>
+            <input id="catFoodCalories" type="number" min="0" step="1" placeholder="0" />
+          </div>
+          <div>
+            <label for="catFoodProtein">Proteínas (g)</label>
+            <input id="catFoodProtein" type="number" min="0" step="0.1" placeholder="0" />
+          </div>
+          <div>
+            <label for="catFoodCarbs">Carboidratos (g)</label>
+            <input id="catFoodCarbs" type="number" min="0" step="0.1" placeholder="0" />
+          </div>
+          <div>
+            <label for="catFoodFat">Gorduras (g)</label>
+            <input id="catFoodFat" type="number" min="0" step="0.1" placeholder="0" />
+          </div>
+          <div class="form-full btn-row">
+            <button id="catFoodSubmitBtn" type="submit" class="btn-primary">Salvar no catálogo</button>
+          </div>
+        </form>
+        <h3 style="margin-top: 18px;">Alimentos cadastrados</h3>
+        <div id="catalogFoodList"></div>
+      </div>
+    </section>
+
+    <!-- 4.3 PLANO ALIMENTAR E NUTRICIONISTA -->
+    <section id="plano" class="tab-section">
+      <div class="section-head">
+        <h2>Plano alimentar e nutricionista 📋</h2>
+      </div>
+
+      <div class="info-banner">
+        Registre aqui exatamente as refeições, quantidades e orientações fornecidas por você ou pela sua nutricionista. O aplicativo não cria ou sugere dietas automaticamente.
+      </div>
+
+      <div class="card">
+        <h3>Cadastrar refeição ou orientação do plano</h3>
+        <form id="mealPlanForm" class="form-grid">
+          <div>
+            <label for="planDay">Dia / Planejamento</label>
+            <select id="planDay">
+              <option>Diário</option>
+              <option>Segunda-feira</option>
+              <option>Terça-feira</option>
+              <option>Quarta-feira</option>
+              <option>Quinta-feira</option>
+              <option>Sexta-feira</option>
+              <option>Sábado</option>
+              <option>Domingo</option>
+            </select>
+          </div>
+          <div>
+            <label for="planMealName">Refeição</label>
+            <input id="planMealName" type="text" required placeholder="Ex.: Café da manhã, Lanche da tarde" />
+          </div>
+          <div class="form-full">
+            <label for="planFoods">Alimentos recomendados</label>
+            <textarea id="planFoods" required placeholder="Ex.: Ovos mexidos, pão integral, mamão"></textarea>
+          </div>
+          <div class="form-full">
+            <label for="planQuantities">Quantidades</label>
+            <input id="planQuantities" type="text" placeholder="Ex.: 2 ovos, 2 fatias, 100 g" />
+          </div>
+          <div class="form-full">
+            <label for="planGuidance">Orientações da nutricionista / observações</label>
+            <textarea id="planGuidance" placeholder="Orientações específicas do seu plano..."></textarea>
+          </div>
+          <div class="form-full btn-row">
+            <button id="planSubmitBtn" type="submit" class="btn-primary">Salvar item do plano</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Planejamento e acompanhamento</h3>
+        <div id="mealPlanList"></div>
+      </div>
+    </section>
+
+    <!-- 4.4 RECEITAS -->
+    <section id="receitas" class="tab-section">
+      <div class="section-head">
+        <h2>Minhas receitas 🥗</h2>
+      </div>
+
+      <div class="card">
+        <h3>Cadastrar ou editar receita</h3>
+        <form id="recipeForm" class="form-grid">
+          <div>
+            <label for="recipeTitle">Nome da receita</label>
+            <input id="recipeTitle" type="text" required placeholder="Ex.: Panqueca de aveia e banana" />
+          </div>
+          <div>
+            <label for="recipeCategory">Categoria</label>
+            <select id="recipeCategory">
+              <option>Café da manhã</option>
+              <option>Almoço e Jantar</option>
+              <option>Lanches</option>
+              <option>Sobremesas saudáveis</option>
+              <option>Bebidas</option>
+              <option>Geral</option>
+            </select>
+          </div>
+          <div>
+            <label for="recipeTime">Tempo de preparo</label>
+            <input id="recipeTime" type="text" placeholder="Ex.: 15 minutos" />
+          </div>
+          <div>
+            <label for="recipeServings">Porções</label>
+            <input id="recipeServings" type="text" placeholder="Ex.: 2 porções" />
+          </div>
+          <div class="form-full">
+            <label for="recipeIngredients">Ingredientes e quantidades</label>
+            <textarea id="recipeIngredients" required placeholder="Liste os ingredientes e suas quantidades..."></textarea>
+          </div>
+          <div class="form-full">
+            <label for="recipeInstructions">Modo de preparo</label>
+            <textarea id="recipeInstructions" required placeholder="Descreva o passo a passo..."></textarea>
+          </div>
+          <div class="form-full">
+            <label for="recipeNutrition">Informações nutricionais (quando conhecidas)</label>
+            <input id="recipeNutrition" type="text" placeholder="Ex.: Conforme rótulo ou cálculo próprio" />
+          </div>
+          <div class="form-full btn-row">
+            <button id="recipeSubmitBtn" type="submit" class="btn-primary">Salvar receita</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Receitas salvas</h3>
+        <div class="form-grid" style="margin-bottom: 10px;">
+          <div>
+            <label for="recipeFilterCategory">Filtrar por categoria</label>
+            <select id="recipeFilterCategory" onchange="renderRecipes()">
+              <option value="Todas">Todas</option>
+              <option>Café da manhã</option>
+              <option>Almoço e Jantar</option>
+              <option>Lanches</option>
+              <option>Sobremesas saudáveis</option>
+              <option>Bebidas</option>
+              <option>Geral</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: flex-end; padding-bottom: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+              <input id="recipeFilterFav" type="checkbox" style="width: auto; margin: 0;" onchange="renderRecipes()" />
+              Mostrar apenas favoritas
+            </label>
+          </div>
+        </div>
+        <div id="recipeList"></div>
+      </div>
+    </section>
+
+    <!-- 4.5 EXERCÍCIOS -->
+    <section id="exercicios" class="tab-section">
+      <div class="section-head">
+        <h2>Atividades físicas 🧘</h2>
+      </div>
+
+      <div class="info-banner">
+        O aplicativo não estima ou calcula gasto calórico automaticamente para evitar valores imprecisos. Registre modalidade, duração, data, horário e suas observações pessoais.
+      </div>
+
+      <div class="card">
+        <h3>Registrar atividade física</h3>
+        <form id="workoutForm" class="form-grid">
+          <div class="form-full">
+            <label for="workoutName">Modalidade / Atividade</label>
+            <input id="workoutName" type="text" required placeholder="Ex.: Caminhada, Musculação, Pilates, Corrida" />
+          </div>
+          <div>
+            <label for="workoutDuration">Duração (minutos)</label>
+            <input id="workoutDuration" type="number" min="1" step="1" required placeholder="Ex.: 45" />
+          </div>
+          <div>
+            <label for="workoutDate">Data</label>
+            <input id="workoutDate" type="date" required />
+          </div>
+          <div>
+            <label for="workoutTime">Horário</label>
+            <input id="workoutTime" type="time" />
+          </div>
+          <div class="form-full">
+            <label for="workoutNotes">Observações</label>
+            <textarea id="workoutNotes" placeholder="Como foi a sessão, intensidade, percepção de esforço..."></textarea>
+          </div>
+          <div class="form-full btn-row">
+            <button id="workoutSubmitBtn" type="submit" class="btn-primary">Registrar atividade</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Histórico de atividades</h3>
+        <div id="workoutList"></div>
+      </div>
+    </section>
+
+    <!-- 4.6 HIDRATAÇÃO -->
+    <section id="agua" class="tab-section">
+      <div class="section-head">
+        <h2>Minha hidratação 💧</h2>
+      </div>
+
+      <div class="card card-nude">
+        <h3>Meta diária pessoal (opcional)</h3>
+        <p class="date-caption">Defina sua meta em ml apenas se desejar acompanhar um alvo próprio. Nenhuma meta é imposta automaticamente.</p>
+        <form id="waterGoalForm" class="form-grid" style="margin-top: 10px;">
+          <div>
+            <label for="waterGoalInput">Meta diária (ml)</label>
+            <input id="waterGoalInput" type="number" min="50" step="50" placeholder="Ex.: 2000" />
+          </div>
+          <div class="form-full btn-row">
+            <button type="submit" class="btn-primary">Salvar meta</button>
+            <button type="button" class="btn-secondary" onclick="clearWaterGoal()">Remover meta</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Registrar consumo de água</h3>
+        <form id="waterForm" class="form-grid">
+          <div>
+            <label for="waterAmount">Quantidade (ml)</label>
+            <input id="waterAmount" type="number" min="1" step="1" required placeholder="Ex.: 250" />
+          </div>
+          <div>
+            <label for="waterDate">Data</label>
+            <input id="waterDate" type="date" required />
+          </div>
+          <div>
+            <label for="waterTime">Horário</label>
+            <input id="waterTime" type="time" />
+          </div>
+          <div class="form-full btn-row">
+            <button id="waterSubmitBtn" type="submit" class="btn-primary">Registrar água</button>
+          </div>
+        </form>
+
+        <h3 id="waterSummaryText" style="margin-top: 18px;">Total hoje: 0 ml</h3>
+        <div class="progress-track">
+          <div id="waterProgressBar" class="progress-fill" style="width: 0%;"></div>
+        </div>
+        <small id="waterProgressLabel"></small>
+
+        <h3 style="margin-top: 18px;">Histórico de hidratação</h3>
+        <div id="waterList"></div>
+      </div>
+    </section>
+
+    <!-- 4.7 PESO E MEDIDAS -->
+    <section id="medidas" class="tab-section">
+      <div class="section-head">
+        <h2>Peso e medidas corporais 📏</h2>
+      </div>
+
+      <div class="card">
+        <h3>Nova medição</h3>
+        <form id="bodyForm" class="form-grid">
+          <div>
+            <label for="bodyDate">Data da medição</label>
+            <input id="bodyDate" type="date" required />
+          </div>
+          <div>
+            <label for="weight">Peso (kg)</label>
+            <input id="weight" type="number" min="0" step="0.1" placeholder="Ex.: 64.5" />
+          </div>
+          <div>
+            <label for="waist">Cintura (cm)</label>
+            <input id="waist" type="number" min="0" step="0.1" placeholder="Ex.: 70.0" />
+          </div>
+          <div>
+            <label for="abdomen">Abdômen (cm)</label>
+            <input id="abdomen" type="number" min="0" step="0.1" placeholder="Ex.: 80.0" />
+          </div>
+          <div>
+            <label for="hip">Quadril (cm)</label>
+            <input id="hip" type="number" min="0" step="0.1" placeholder="Ex.: 96.0" />
+          </div>
+          <div>
+            <label for="arm">Braços (cm)</label>
+            <input id="arm" type="number" min="0" step="0.1" placeholder="Ex.: 28.0" />
+          </div>
+          <div>
+            <label for="thigh">Coxas (cm)</label>
+            <input id="thigh" type="number" min="0" step="0.1" placeholder="Ex.: 56.0" />
+          </div>
+          <div>
+            <label for="customMeasureLabel">Medida pe
