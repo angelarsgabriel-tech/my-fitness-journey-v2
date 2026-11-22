@@ -748,6 +748,7 @@ window.selectPlanTacoFood = selectPlanTacoFood;
 
 function renderMealPlans() {
   const listEl = document.getElementById('mealPlanList');
+  if (!listEl) return; // A aba de plano alimentar foi removida; mantém os dados locais intactos.
   if (!state.data.meal_plans.length) {
     listEl.innerHTML = '<small>Nenhuma refeição ou orientação cadastrada no plano alimentar.</small>';
     return;
@@ -1544,7 +1545,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Bind formulários
   document.getElementById('catalogFoodForm').addEventListener('submit', saveCatalogFood);
   document.getElementById('foodForm').addEventListener('submit', saveMeal);
-  document.getElementById('mealPlanForm').addEventListener('submit', saveMealPlan);
   const planImportButton = document.getElementById('planImportBtn');
   if (planImportButton) {
     planImportButton.addEventListener('click', async (event) => {
