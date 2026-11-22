@@ -591,46 +591,42 @@ async function saveMealPlan(e) {
 async function importMealPlanJSON() {
   const status = document.getElementById('planImportStatus');
   const input = document.getElementById('planImportJSON');
-  if (status) status.textContent = 'Botão acionado. Verificando o conteúdo...';
+  if (status) status.textContent = 'Validando o plano...';
   try {
-  if (!input) throw new Error('Campo de texto não encontrado. Atualize a página e tente novamente.');
-  let items;
-  try {
-    items = JSON.parse(input.value);
-  } catch {
-    return showToast('O conteúdo não está em um JSON válido.', 'error');
-  }
-  if (!Array.isArray(items) || !items.length) {
-    return showToast('O plano precisa conter uma lista de refeições.', 'error');
-  }
-  const valid = items.every(item =>
-    item && typeof item.mealName === 'string' &&
-    typeof item.foodsRecommended === 'string' &&
-    item.mealName.trim() && item.foodsRecommended.trim()
-  );
-  if (!valid) return showToast('Confira os campos de refeição e alimentos do plano.', 'error');
-
-  const existingKeys = new Set(state.data.meal_plans.map(item => item.planKey).filter(Boolean));
-  const newItems = items.filter(item => !item.planKey || !existingKeys.has(item.planKey));
-  if (!newItems.length) return showToast('Esse plano já foi importado. Nenhum registro duplicado foi criado.', 'info');
-
-  for (const item of newItems) {
-    await idbPut('meal_plans', {
-      id: uid(),
-      planKey: item.planKey || '',
-      dayLabel: 'Diário',
-      mealName: item.mealName.trim(),
-      foodsRecommended: item.foodsRecommended.trim(),
-      quantities: String(item.quantities || ''),
-      guidance: String(item.guidance || ''),
-      completed: false,
-      date: todayISO()
-    });
-  }
-  await refreshAllData();
-  renderAll();
-  showToast(`${newItems.length} refeições importadas para o seu plano!`, 'success');
-  if (status) status.textContent = `Pronto! ${newItems.length} refeições importadas.`;
+    if (!input) throw new Error('Campo de texto não encontrado.');
+    const items = JSON.parse(input.value);
+    if (!Array.isArray(items) || !items.length) throw new Error('O plano precisa conter refeições em formato de lista.');
+    const valid = items.every(item =>
+      item && typeof item.mealName === 'string' && item.mealName.trim() &&
+      (Array.isArray(item.options) ? item.options.length > 0 : typeof item.foodsRecommended === 'string' && item.foodsRecommended.trim())
+    );
+    if (!valid) throw new Error('Cada refeição precisa ter um nome e pelo menos uma opção alimentar.');
+    const existingByKey = new Map(state.data.meal_plans.filter(x => x.planKey).map(x => [x.planKey, x]));
+    let imported = 0;
+    for (const item of items) {
+      const existing = item.planKey ? existingByKey.get(item.planKey) : null;
+      const record = {
+        ...(existing || {}),
+        id: existing ? existing.id : uid(),
+        planKey: item.planKey || '',
+        dayLabel: item.dayLabel || 'Diário',
+        mealName: item.mealName.trim(),
+        foodsRecommended: String(item.foodsRecommended || ''),
+        quantities: String(item.quantities || ''),
+        guidance: String(item.guidance || ''),
+        options: Array.isArray(item.options) ? item.options : [],
+        completed: existing ? Boolean(existing.completed) : false,
+        date: existing ? existing.date : todayISO(),
+        planStructureVersion: 2
+      };
+      await idbPut('meal_plans', record);
+      imported++;
+    }
+    await refreshAllData();
+    renderAll();
+    const msg = `${imported} refeições estruturadas importadas/atualizadas. Os registros anteriores foram atualizados sem duplicação.`;
+    showToast(msg, 'success');
+    if (status) status.textContent = msg;
   } catch (error) {
     console.error('Erro ao importar plano alimentar:', error);
     if (status) status.textContent = `Erro na importação: ${error.message || error}`;
@@ -662,33 +658,50 @@ async function toggleMealPlanDone(id) {
   showToast(item.completed ? 'Refeição marcada como realizada!' : 'Marcação removida.', 'success');
 }
 
+function renderMealPlanFoodGroup(group) {
+  const items = Array.isArray(group.items) ? group.items : [];
+  if (!items.length) return '';
+  return items.map(food => {
+    const qty = [food.quantity, food.unit].filter(Boolean).join(' ');
+    const nutrition = food.nutrition;
+    const nutritionText = nutrition
+      ? `<small>${Number(nutrition.kcal || 0).toFixed(1)} kcal · P ${Number(nutrition.protein || 0).toFixed(1)} g · C ${Number(nutrition.carbs || 0).toFixed(1)} g · G ${Number(nutrition.fat || 0).toFixed(1)} g · ${escapeHTML(nutrition.source || 'Fonte não informada')}</small>`
+      : '<small class="muted">Composição nutricional ainda não vinculada à TACO/rótulo.</small>';
+    return `<div class="plan-food-line">• <strong>${escapeHTML(food.name || 'Alimento')}</strong>${qty ? ' — ' + escapeHTML(qty) : ''}<br>${nutritionText}</div>`;
+  }).join('<div class="muted">OU</div>');
+}
+
 function renderMealPlans() {
   const listEl = document.getElementById('mealPlanList');
   if (!state.data.meal_plans.length) {
     listEl.innerHTML = '<small>Nenhuma refeição ou orientação cadastrada no plano alimentar.</small>';
     return;
   }
-  listEl.innerHTML = state.data.meal_plans.map(item => `
-    <div class="record-item">
-      <div class="record-body">
-        <div class="record-title">
-          <span class="badge">${escapeHTML(item.dayLabel || 'Diário')}</span>
-          ${escapeHTML(item.mealName)}
-          <span class="badge ${item.completed ? 'badge-done' : ''}">${item.completed ? '✓ Realizada' : 'Pendente'}</span>
+  listEl.innerHTML = state.data.meal_plans.map(item => {
+    const structured = Array.isArray(item.options) && item.options.length;
+    const optionsHTML = structured ? item.options.map((option, optionIndex) => {
+      const groups = Array.isArray(option.groups) ? option.groups : [];
+      const foodsHTML = groups.map(group => renderMealPlanFoodGroup(group)).join('<div class="plan-food-group"></div>');
+      return `<div class="plan-option"><strong>Opção ${optionIndex + 1}${option.label ? ': ' + escapeHTML(option.label) : ''}</strong><div class="record-meta">${foodsHTML}</div></div>`;
+    }).join('') : '';
+    return `
+      <div class="record-item">
+        <div class="record-body">
+          <div class="record-title">
+            <span class="badge">${escapeHTML(item.dayLabel || 'Diário')}</span>
+            ${escapeHTML(item.mealName)}
+            <span class="badge ${item.completed ? 'badge-done' : ''}">${item.completed ? '✓ Realizada' : 'Pendente'}</span>
+          </div>
+          ${structured ? optionsHTML : `<div class="record-meta"><strong>Alimentos recomendados:</strong> ${escapeHTML(item.foodsRecommended || '')}<br>${item.quantities ? `<strong>Quantidades:</strong> ${escapeHTML(item.quantities)}<br>` : ''}${item.guidance ? `<strong>Orientações:</strong> ${escapeHTML(item.guidance)}` : ''}</div>`}
+          ${item.guidance && structured ? `<div class="record-meta"><strong>Orientações:</strong> ${escapeHTML(item.guidance)}</div>` : ''}
         </div>
-        <div class="record-meta">
-          <strong>Alimentos recomendados:</strong> ${escapeHTML(item.foodsRecommended)}<br>
-          ${item.quantities ? `<strong>Quantidades:</strong> ${escapeHTML(item.quantities)}<br>` : ''}
-          ${item.guidance ? `<strong>Orientações:</strong> ${escapeHTML(item.guidance)}` : ''}
+        <div class="record-actions">
+          <button class="btn-secondary" onclick="toggleMealPlanDone('${item.id}')">${item.completed ? 'Desmarcar' : 'Marcar realizada'}</button>
+          <button class="btn-secondary" onclick="editMealPlan('${item.id}')">Editar</button>
+          <button class="btn-danger" onclick="deleteRecord('meal_plans', '${item.id}')">Excluir</button>
         </div>
-      </div>
-      <div class="record-actions">
-        <button class="btn-secondary" onclick="toggleMealPlanDone('${item.id}')">${item.completed ? 'Desmarcar' : 'Marcar realizada'}</button>
-        <button class="btn-secondary" onclick="editMealPlan('${item.id}')">Editar</button>
-        <button class="btn-danger" onclick="deleteRecord('meal_plans', '${item.id}')">Excluir</button>
-      </div>
-    </div>
-  `).join('');
+      </div>`;
+  }).join('');
 }
 
 /* ---------- 4.4 Receitas ---------- */
