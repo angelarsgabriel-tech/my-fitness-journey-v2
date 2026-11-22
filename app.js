@@ -929,62 +929,37 @@ function renderWater() {
 }
 
 /* ---------- 4.7 Peso e Medidas ---------- */
+
 async function saveBodyMeasurement(e) {
   e.preventDefault();
   const date = document.getElementById('bodyDate').value || todayISO();
-  const weight = document.getElementById('weight').value.trim();
-  const waist = document.getElementById('waist').value.trim();
-  const abdomen = document.getElementById('abdomen').value.trim();
-  const hip = document.getElementById('hip').value.trim();
-  const arm = document.getElementById('arm').value.trim();
-  const thigh = document.getElementById('thigh').value.trim();
-  const customLabel = document.getElementById('customMeasureLabel').value.trim();
-  const customValue = document.getElementById('customMeasureValue').value.trim();
-
-  const hasAny = [weight, waist, abdomen, hip, arm, thigh, customValue].some(v => v !== '');
-  if (!hasAny) {
-    return showToast('Preencha pelo menos um campo de peso ou medida.', 'error');
+  const rawWeight = document.getElementById('weight').value.trim();
+  const weight = Number(rawWeight);
+  if (!rawWeight || !Number.isFinite(weight) || weight <= 0) {
+    return showToast('Informe um peso válido, maior que zero.', 'error');
   }
-
   const editingId = state.editing.body;
-  const record = {
-    id: editingId || uid(),
-    date,
-    weight: weight !== '' ? Number(weight) : '',
-    waist: waist !== '' ? Number(waist) : '',
-    abdomen: abdomen !== '' ? Number(abdomen) : '',
-    hip: hip !== '' ? Number(hip) : '',
-    arm: arm !== '' ? Number(arm) : '',
-    thigh: thigh !== '' ? Number(thigh) : '',
-    customLabel,
-    customValue: customValue !== '' ? Number(customValue) : ''
-  };
-
+  const existing = editingId ? state.data.body.find(x => x.id === editingId) : null;
+  // Mantém eventuais campos antigos no banco, mas a interface acompanha somente peso.
+  const record = { ...(existing || {}), id: editingId || uid(), date, weight };
   await idbPut('body', record);
   state.editing.body = null;
   document.getElementById('bodyForm').reset();
   document.getElementById('bodyDate').value = todayISO();
-  document.getElementById('bodySubmitBtn').textContent = 'Salvar medição';
+  document.getElementById('bodySubmitBtn').textContent = 'Salvar peso';
   await refreshAllData();
   renderAll();
-  showToast(editingId ? 'Medição atualizada!' : 'Medição salva!', 'success');
+  showToast(editingId ? 'Peso atualizado!' : 'Peso salvo com sucesso!', 'success');
 }
 
 function editBodyMeasurement(id) {
   const item = state.data.body.find(x => x.id === id);
-  if (!item) return;
+  if (!item || item.weight === '' || item.weight === undefined || !Number.isFinite(Number(item.weight))) return;
   state.editing.body = id;
   document.getElementById('bodyDate').value = item.date || todayISO();
-  document.getElementById('weight').value = item.weight ?? '';
-  document.getElementById('waist').value = item.waist ?? '';
-  document.getElementById('abdomen').value = item.abdomen ?? '';
-  document.getElementById('hip').value = item.hip ?? '';
-  document.getElementById('arm').value = item.arm ?? '';
-  document.getElementById('thigh').value = item.thigh ?? '';
-  document.getElementById('customMeasureLabel').value = item.customLabel || '';
-  document.getElementById('customMeasureValue').value = item.customValue ?? '';
-  document.getElementById('bodySubmitBtn').textContent = 'Atualizar medição';
-  showToast('Editando medição corporal.', 'info');
+  document.getElementById('weight').value = item.weight;
+  document.getElementById('bodySubmitBtn').textContent = 'Atualizar peso';
+  document.getElementById('weight').focus();
 }
 
 function renderLineChartSVG(containerId, points, unit, strokeColor = '#d48d9d') {
@@ -1040,62 +1015,46 @@ function renderLineChartSVG(containerId, points, unit, strokeColor = '#d48d9d') 
   `;
 }
 
+
 function renderBodyModule() {
-  // O módulo de medidas pode não estar presente em versões reduzidas da interface.
-  const measureSelect = document.getElementById('measureChartSelect');
-  const bodyListEl = document.getElementById('bodyList');
-  const weightChartEl = document.getElementById('weightChartContainer');
-  const measureChartEl = document.getElementById('measureChartContainer');
-  if (!measureSelect || !bodyListEl || !weightChartEl || !measureChartEl) return;
+  const listEl = document.getElementById('bodyList');
+  const chartEl = document.getElementById('weightChartContainer');
+  const summaryEl = document.getElementById('weightSummary');
+  if (!listEl || !chartEl || !summaryEl) return;
 
-  const sorted = [...state.data.body].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const sorted = state.data.body
+    .filter(x => x.weight !== '' && x.weight !== null && x.weight !== undefined && Number.isFinite(Number(x.weight)))
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const points = sorted.map(x => ({ label: formatDateBR(x.date).slice(0, 5), value: Number(x.weight) }));
+  renderLineChartSVG('weightChartContainer', points, ' kg', '#d48d9d');
 
-  const weightPts = sorted
-    .filter(x => x.weight !== '' && x.weight !== null && x.weight !== undefined && !Number.isNaN(Number(x.weight)))
-    .map(x => ({ label: formatDateBR(x.date).slice(0, 5), value: Number(x.weight) }));
-
-  const metricKey = measureSelect.value;
-  const metricPts = sorted
-    .filter(x => x[metricKey] !== '' && x[metricKey] !== null && x[metricKey] !== undefined && !Number.isNaN(Number(x[metricKey])))
-    .map(x => ({ label: formatDateBR(x.date).slice(0, 5), value: Number(x[metricKey]) }));
-
-  renderLineChartSVG('weightChartContainer', weightPts, 'kg', '#d48d9d');
-  renderLineChartSVG('measureChartContainer', metricPts, 'cm', '#9d6372');
-
-  const listEl = bodyListEl;
-  const desc = [...sorted].reverse();
-  if (!desc.length) {
-    listEl.innerHTML = '<small>Nenhuma medição registrada ainda.</small>';
+  if (!sorted.length) {
+    summaryEl.innerHTML = '<div class="metric-box"><span class="metric-label">Pesagens registradas</span><span class="metric-value">0</span></div><div class="metric-box nude-box"><span class="metric-label">Último peso</span><span class="metric-value">—</span></div>';
+    listEl.innerHTML = '<small>Você ainda não registrou nenhuma pesagem. Comece adicionando seu peso e a data.</small>';
     return;
   }
 
-  listEl.innerHTML = desc.map(m => {
-    const parts = [];
-    if (m.weight !== '' && m.weight !== undefined) parts.push(`Peso: <strong>${Number(m.weight).toFixed(1)} kg</strong>`);
-    if (m.waist !== '' && m.waist !== undefined) parts.push(`Cintura: ${m.waist} cm`);
-    if (m.abdomen !== '' && m.abdomen !== undefined) parts.push(`Abdômen: ${m.abdomen} cm`);
-    if (m.hip !== '' && m.hip !== undefined) parts.push(`Quadril: ${m.hip} cm`);
-    if (m.arm !== '' && m.arm !== undefined) parts.push(`Braços: ${m.arm} cm`);
-    if (m.thigh !== '' && m.thigh !== undefined) parts.push(`Coxas: ${m.thigh} cm`);
-    if (m.customValue !== '' && m.customValue !== undefined) {
-      parts.push(`${escapeHTML(m.customLabel || 'Medida personalizada')}: ${m.customValue}`);
-    }
+  const first = sorted[0];
+  const latest = sorted[sorted.length - 1];
+  const delta = Number(latest.weight) - Number(first.weight);
+  summaryEl.innerHTML =
+    '<div class="metric-box"><span class="metric-label">Último peso · ' + formatDateBR(latest.date) + '</span><span class="metric-value">' + Number(latest.weight).toFixed(1) + ' kg</span></div>' +
+    '<div class="metric-box nude-box"><span class="metric-label">Variação desde o primeiro registro</span><span class="metric-value">' + (delta > 0 ? '+' : '') + delta.toFixed(1) + ' kg</span><span class="metric-sub">' + Number(first.weight).toFixed(1) + ' → ' + Number(latest.weight).toFixed(1) + ' kg</span></div>';
 
-    return `
-      <div class="record-item">
-        <div class="record-body">
-          <div class="record-title">Medição · ${formatDateBR(m.date)}</div>
-          <div class="record-meta">${parts.join(' · ') || 'Sem valores numéricos'}</div>
-        </div>
-        <div class="record-actions">
-          <button class="btn-secondary" onclick="editBodyMeasurement('${m.id}')">Editar</button>
-          <button class="btn-danger" onclick="deleteRecord('body', '${m.id}')">Excluir</button>
-        </div>
-      </div>
-    `;
+  listEl.innerHTML = [...sorted].reverse().map((item, index, arr) => {
+    const previous = arr[index + 1];
+    const difference = previous ? Number(item.weight) - Number(previous.weight) : null;
+    const comparison = difference === null ? 'Primeiro registro' :
+      (difference > 0 ? '+' : '') + difference.toFixed(1) + ' kg em relação à pesagem anterior';
+    return '<div class="record-item"><div class="record-body"><div class="record-title">' +
+      Number(item.weight).toFixed(1) + ' kg</div><div class="record-meta">' + escapeHTML(comparison) +
+      '</div><div class="record-date">' + formatDateBR(item.date) + '</div></div><div class="record-actions">' +
+      '<button class="btn-secondary" onclick="editBodyMeasurement(\'' + item.id + '\')">Editar</button>' +
+      '<button class="btn-danger" onclick="deleteRecord(\'body\', \'' + item.id + '\')">Excluir</button></div></div>';
   }).join('');
 }
 
+/* ---------- 4.8 Relatórios ---------- */
 /* ---------- 4.8 Relatórios ---------- */
 function getPeriodRange(periodKey) {
   const now = new Date();
@@ -1116,15 +1075,16 @@ function inRange(dateStr, startISO, endISO) {
   return true;
 }
 
-function generateReport() {
-  const period = document.getElementById('reportPeriod')?.value || '7d';
-  const { startISO, endISO } = getPeriodRange(period);
 
-  const foods = state.data.foods.filter(x => inRange(x.date, startISO, endISO));
-  const water = state.data.water.filter(x => inRange(x.date, startISO, endISO));
-  const workouts = state.data.workouts.filter(x => inRange(x.date, startISO, endISO));
-  const body = state.data.body
-    .filter(x => inRange(x.date, startISO, endISO))
+function generateReport() {
+  const periodEl = document.getElementById('reportPeriod');
+  const period = periodEl ? periodEl.value : '7d';
+  const range = getPeriodRange(period);
+  const foods = state.data.foods.filter(x => inRange(x.date, range.startISO, range.endISO));
+  const water = state.data.water.filter(x => inRange(x.date, range.startISO, range.endISO));
+  const workouts = state.data.workouts.filter(x => inRange(x.date, range.startISO, range.endISO));
+  const weights = state.data.body.filter(x => inRange(x.date, range.startISO, range.endISO) &&
+    x.weight !== '' && x.weight !== undefined && Number.isFinite(Number(x.weight)))
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
   const totalKcal = foods.reduce((s, x) => s + (Number(x.calories) || 0), 0);
@@ -1134,48 +1094,43 @@ function generateReport() {
   const totalWater = water.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const totalWorkoutMin = workouts.reduce((s, x) => s + (Number(x.duration) || 0), 0);
   const mealCount = groupFoodEntriesByMeal(foods).length;
-
-  const weights = body.filter(x => x.weight !== '' && x.weight !== undefined && !Number.isNaN(Number(x.weight)));
   const firstW = weights.length ? Number(weights[0].weight) : null;
   const lastW = weights.length ? Number(weights[weights.length - 1].weight) : null;
-  const deltaW = firstW !== null && lastW !== null ? (lastW - firstW).toFixed(1) : null;
+  const deltaW = firstW !== null && lastW !== null ? lastW - firstW : null;
+  const put = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
 
-  document.getElementById('repKcal').textContent = `${Math.round(totalKcal)} kcal`;
-  document.getElementById('repMacros').textContent = `P: ${totalProt.toFixed(1)}g · C: ${totalCarb.toFixed(1)}g · G: ${totalFat.toFixed(1)}g`;
-  document.getElementById('repWater').textContent = `${totalWater} ml`;
-  document.getElementById('repWorkouts').textContent = `${workouts.length} (${totalWorkoutMin} min)`;
-  document.getElementById('repWeightDelta').textContent = deltaW !== null
-    ? `${deltaW > 0 ? '+' : ''}${deltaW} kg (${firstW.toFixed(1)} → ${lastW.toFixed(1)})`
-    : 'Sem dados suficientes';
+  put('repKcal', Math.round(totalKcal) + ' kcal');
+  put('repMacros', 'P: ' + totalProt.toFixed(1) + 'g · C: ' + totalCarb.toFixed(1) + 'g · G: ' + totalFat.toFixed(1) + 'g');
+  put('repWater', totalWater.toLocaleString('pt-BR') + ' ml');
+  put('repWorkouts', workouts.length + ' sessão(ões) · ' + totalWorkoutMin + ' min');
+  put('repWeightDelta', deltaW !== null ? (deltaW > 0 ? '+' : '') + deltaW.toFixed(1) + ' kg' : 'Sem dados');
 
+  const periodLabel = period === 'all' ? 'Todo o histórico' : period === '7d' ? 'Últimos 7 dias' : 'Últimos 30 dias';
   const lines = [
-    `RELATÓRIO MY FITNESS JOURNEY V2`,
-    `Período: ${period === 'all' ? 'Todos os registros' : period === '7d' ? 'Últimos 7 dias' : 'Últimos 30 dias'}`,
-    `Gerado em: ${formatDateBR(todayISO())}`,
-    `----------------------------------------`,
-    `ALIMENTAÇÃO (${mealCount} refeições | ${foods.length} alimentos registrados):`,
-    `- Calorias registradas: ${Math.round(totalKcal)} kcal`,
-    `- Proteínas: ${totalProt.toFixed(1)} g | Carboidratos: ${totalCarb.toFixed(1)} g | Gorduras: ${totalFat.toFixed(1)} g`,
-    ``,
-    `HIDRATAÇÃO (${water.length} registros):`,
-    `- Total consumido no período: ${totalWater} ml`,
-    ``,
-    `EXERCÍCIOS (${workouts.length} sessões):`,
-    `- Tempo total registrado: ${totalWorkoutMin} minutos`,
-    ``,
-    `PESO E MEDIDAS (${body.length} medições no período):`,
-    weights.length
-      ? `- Peso inicial: ${firstW.toFixed(1)} kg | Peso mais recente: ${lastW.toFixed(1)} kg | Variação: ${deltaW > 0 ? '+' : ''}${deltaW} kg`
-      : `- Nenhum registro de peso no período.`
+    'RELATÓRIO MY FITNESS JOURNEY',
+    'Período: ' + periodLabel,
+    'Gerado em: ' + formatDateBR(todayISO()),
+    '',
+    'ALIMENTAÇÃO: ' + mealCount + ' refeição(ões) agrupadas e ' + foods.length + ' alimentos registrados',
+    'Calorias: ' + Math.round(totalKcal) + ' kcal',
+    'Proteínas: ' + totalProt.toFixed(1) + ' g | Carboidratos: ' + totalCarb.toFixed(1) + ' g | Gorduras: ' + totalFat.toFixed(1) + ' g',
+    '',
+    'HIDRATAÇÃO: ' + water.length + ' registro(s), total de ' + totalWater + ' ml',
+    '',
+    'EXERCÍCIOS: ' + workouts.length + ' sessão(ões), total de ' + totalWorkoutMin + ' minutos',
+    '',
+    'PESO: ' + weights.length + ' pesagem(ns)'
   ];
-
-  if (body.length) {
-    lines.push(`- Última medição (${formatDateBR(body[body.length - 1].date)}): Cintura ${body[body.length - 1].waist || '—'} cm | Abdômen ${body[body.length - 1].abdomen || '—'} cm | Quadril ${body[body.length - 1].hip || '—'} cm`);
+  if (weights.length) {
+    lines.push('Primeiro peso no período: ' + firstW.toFixed(1) + ' kg (' + formatDateBR(weights[0].date) + ')');
+    lines.push('Peso mais recente: ' + lastW.toFixed(1) + ' kg (' + formatDateBR(weights[weights.length - 1].date) + ')');
+    lines.push('Variação: ' + (deltaW > 0 ? '+' : '') + deltaW.toFixed(1) + ' kg');
+  } else {
+    lines.push('Nenhuma pesagem registrada neste período.');
   }
-
-  const text = lines.join('\n');
-  document.getElementById('reportTextOutput').textContent = text;
-  return text;
+  const output = document.getElementById('reportTextOutput');
+  if (output) output.textContent = lines.join('\n');
+  return lines.join('\n');
 }
 
 function exportReportTXT() {
@@ -1282,64 +1237,46 @@ function checkDueReminders() {
   }
 }
 
+
 function renderCalendarAndReminders() {
   renderReminderPermissionStatus();
+  const dateEl = document.getElementById('calendarDateInput');
+  const summaryEl = document.getElementById('calendarDaySummary');
+  const reminderList = document.getElementById('reminderList');
 
-  // Algumas versões da interface não incluem o módulo de calendário/lembretes.
-  // A ausência desses elementos não pode interromper os demais módulos.
-  const calendarDateEl = document.getElementById('calendarDateInput');
-  const calendarSummaryEl = document.getElementById('calendarDaySummary');
-  const reminderListEl = document.getElementById('reminderList');
-  if (!calendarDateEl || !calendarSummaryEl || !reminderListEl) return;
-
-  const selDate = calendarDateEl.value || todayISO();
-  const dayFoods = state.data.foods.filter(x => x.date === selDate);
-  const dayWater = state.data.water.filter(x => x.date === selDate);
-  const dayWorkouts = state.data.workouts.filter(x => x.date === selDate);
-  const dayBody = state.data.body.filter(x => x.date === selDate);
-
-  const waterSum = dayWater.reduce((s, x) => s + (Number(x.amount) || 0), 0);
-  const kcalSum = dayFoods.reduce((s, x) => s + (Number(x.calories) || 0), 0);
-
-  calendarSummaryEl.innerHTML = `
-    <div class="metrics-grid-2">
-      <div class="metric-box">
-        <span class="metric-label">Refeições em ${formatDateBR(selDate)}</span>
-        <span class="metric-value">${groupFoodEntriesByMeal(dayFoods).length}</span>
-        <span class="metric-sub">${Math.round(kcalSum)} kcal registrados</span>
-      </div>
-      <div class="metric-box nude-box">
-        <span class="metric-label">Hidratação · Exercícios · Medições</span>
-        <span class="metric-value">${waterSum} ml</span>
-        <span class="metric-sub">${dayWorkouts.length} exercício(s) · ${dayBody.length} medição(ões)</span>
-      </div>
-    </div>
-  `;
-
-  const listEl = reminderListEl;
-  if (!state.data.reminders.length) {
-    listEl.innerHTML = '<small>Nenhum lembrete cadastrado ainda.</small>';
-    return;
+  if (dateEl && summaryEl) {
+    const date = dateEl.value || todayISO();
+    const foods = state.data.foods.filter(x => x.date === date);
+    const water = state.data.water.filter(x => x.date === date);
+    const workouts = state.data.workouts.filter(x => x.date === date);
+    const weights = state.data.body.filter(x => x.date === date && x.weight !== '' && x.weight !== undefined);
+    const kcal = foods.reduce((sum, x) => sum + (Number(x.calories) || 0), 0);
+    const ml = water.reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+    summaryEl.innerHTML =
+      '<div class="metrics-grid">' +
+      '<div class="metric-box"><span class="metric-label">Refeições</span><span class="metric-value">' + groupFoodEntriesByMeal(foods).length + '</span></div>' +
+      '<div class="metric-box nude-box"><span class="metric-label">Calorias</span><span class="metric-value">' + Math.round(kcal) + ' kcal</span></div>' +
+      '<div class="metric-box"><span class="metric-label">Água</span><span class="metric-value">' + ml + ' ml</span></div>' +
+      '<div class="metric-box nude-box"><span class="metric-label">Exercícios</span><span class="metric-value">' + workouts.length + '</span></div></div>' +
+      '<p class="date-caption">' + (weights.length ? 'Peso registrado: ' + weights.map(x => Number(x.weight).toFixed(1) + ' kg').join(', ') : 'Nenhuma pesagem nesta data.') + '</p>';
   }
 
-  listEl.innerHTML = state.data.reminders.map(r => `
-    <div class="record-item">
-      <div class="record-body">
-        <div class="record-title">
-          <span class="badge">${escapeHTML(r.time)}</span>
-          <span class="badge">${escapeHTML(r.category)}</span>
-          ${escapeHTML(r.title)}
-        </div>
-        ${r.notes ? `<div class="record-meta">${escapeHTML(r.notes)}</div>` : ''}
-      </div>
-      <div class="record-actions">
-        <button class="btn-secondary" onclick="editReminder('${r.id}')">Editar</button>
-        <button class="btn-danger" onclick="deleteRecord('reminders', '${r.id}')">Excluir</button>
-      </div>
-    </div>
-  `).join('');
+  if (!reminderList) return;
+  if (!state.data.reminders.length) {
+    reminderList.innerHTML = '<small>Nenhum lembrete cadastrado. Use o formulário acima para criar o primeiro.</small>';
+    return;
+  }
+  reminderList.innerHTML = [...state.data.reminders].sort((a, b) => (a.time || '').localeCompare(b.time || '')).map(r =>
+    '<div class="record-item"><div class="record-body"><div class="record-title"><span class="badge">' +
+    escapeHTML(r.time || '') + '</span> ' + escapeHTML(r.title) + '</div><div class="record-meta">' +
+    escapeHTML(r.category || 'Outro') + (r.notes ? ' · ' + escapeHTML(r.notes) : '') +
+    '</div></div><div class="record-actions"><button class="btn-secondary" onclick="editReminder(\'' + r.id +
+    '\')">Editar</button><button class="btn-danger" onclick="deleteRecord(\'reminders\', \'' + r.id +
+    '\')">Excluir</button></div></div>'
+  ).join('');
 }
 
+/* ---------- Exclusão Genérica ---------- */
 /* ---------- Exclusão Genérica ---------- */
 async function deleteRecord(storeName, id) {
   if (!confirm('Deseja realmente excluir este registro?')) return;
@@ -1458,6 +1395,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('bodyDate').value = iso;
   const calendarDateInput = document.getElementById('calendarDateInput');
   if (calendarDateInput) calendarDateInput.value = iso;
+  const reportPeriodInput = document.getElementById('reportPeriod');
+  if (reportPeriodInput) reportPeriodInput.addEventListener('change', generateReport);
+  if (calendarDateInput) calendarDateInput.addEventListener('change', renderCalendarAndReminders);
 
   // Bind formulários
   document.getElementById('catalogFoodForm').addEventListener('submit', saveCatalogFood);
