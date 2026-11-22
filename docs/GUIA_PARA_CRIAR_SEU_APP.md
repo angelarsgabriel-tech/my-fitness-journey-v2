@@ -1,245 +1,77 @@
-# Guia completo: crie seu próprio My Fitness Journey
+# Guia para criar seu próprio aplicativo
 
-Este guia explica como copiar o projeto, personalizar o aplicativo e publicar uma versão própria na internet, mesmo sem experiência avançada em programação.
+Este guia foi escrito para quem quer ter uma cópia pessoal do My Fitness Journey V2, mesmo sem experiência em programação. A ideia é primeiro copiar e publicar a versão existente; depois, se quiser, personalizar cores, nome e campos.
 
-> **Importante:** cada pessoa deve criar sua própria cópia do repositório e publicar em sua própria conta. Não use a mesma instalação compartilhada para registrar dados pessoais.
+## 1. Antes de começar
 
-## 1. O que é o aplicativo
-
-O My Fitness Journey V2 é um aplicativo web progressivo (PWA) feito com HTML, CSS e JavaScript. Ele foi pensado para acompanhar hábitos e registros pessoais de bem-estar.
-
-Ele pode ser instalado na tela inicial do celular e possui recursos de funcionamento offline para as telas e dados já carregados. A pesquisa nutricional depende de conexão com a internet.
-
-### Funcionalidades
-
-- **Início:** resumo do dia com calorias e macronutrientes registrados, água, refeições, atividades e peso mais recente.
-- **Alimentação:** diário alimentar, data e categoria da refeição, quantidade, unidade, calorias, proteínas, carboidratos e gorduras. Permite editar e excluir registros.
-- **Busca nutricional:** consulta à TACO e ao Open Food Facts. Os resultados são apresentados por 100 g, podem preencher o formulário e ter a quantidade recalculada quando a unidade é grama. Confira sempre o alimento, a marca e os valores.
-- **Catálogo pessoal:** cadastro de alimentos usados com frequência e favoritos.
-- **Plano alimentar:** espaço para registrar orientações, alimentos e quantidades definidos pela própria pessoa ou por sua nutricionista. O aplicativo não prescreve dietas.
-- **Receitas:** cadastro, edição, filtro por categoria e favoritos.
-- **Exercícios:** registro de modalidade, duração, data, horário e observações. O aplicativo não estima gasto calórico.
-- **Hidratação:** registros em mililitros e meta diária opcional.
-- **Peso e medidas:** histórico de peso, cintura, abdômen, quadril, braços, coxas e uma medida personalizada; exibe gráficos de evolução.
-- **Relatórios:** consolidação de alimentação, hidratação, exercícios e medidas por período, com exportação de relatório em TXT.
-- **Lembretes:** cadastro de lembretes e opção de solicitar notificações do navegador. A entrega depende do suporte e das permissões do dispositivo; não é um serviço de notificação garantido em segundo plano.
-- **Backup:** exportação de todos os registros em JSON e restauração a partir de um arquivo.
-
-Os módulos que aparecem na navegação podem variar conforme a versão da interface. Consulte o código atual de \`index.html\` para conferir os campos e abas disponíveis.
-
-## 2. Tecnologias utilizadas
-
-| Tecnologia | Para que serve |
-|---|---|
-| HTML | Estrutura das telas e formulários |
-| CSS | Cores, layout e adaptação a celular |
-| JavaScript | Regras, cálculos, eventos e renderização |
-| IndexedDB | Banco de dados local no navegador |
-| Service Worker | Cache dos arquivos e suporte offline |
-| Web App Manifest | Configuração de instalação como aplicativo |
-| GitHub | Hospedagem do código e publicação pelo GitHub Pages |
-| TACO | Consulta de composição nutricional de alimentos |
-| Open Food Facts | Consulta de produtos industrializados |
-
-Não há servidor próprio nem banco de dados na nuvem nesta versão. O GitHub Pages entrega os arquivos do site; os registros pessoais ficam no navegador/dispositivo em que o aplicativo é usado.
-
-## 3. O que você precisa
+Você vai precisar de:
 
 1. Uma conta gratuita no GitHub: https://github.com/
-2. Acesso à internet para criar e publicar o projeto.
-3. Um navegador atualizado, como Chrome, Edge ou Safari.
-4. Opcionalmente, um computador. É possível fazer várias etapas pelo navegador do celular, mas editar muitos arquivos é mais confortável em um computador.
+2. Acesso à internet.
+3. Um navegador atualizado.
+4. De preferência, um computador para facilitar a organização dos arquivos. Pelo celular também é possível, mas editar código é menos confortável.
 
-## 4. Criar sua cópia do projeto
+Com uma conta GitHub Free, o GitHub Pages pode publicar sites a partir de repositórios públicos. Consulte as regras atuais do GitHub: https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site
 
-### Opção A — usar o botão Fork
+**Atenção:** o site publicado é público na internet. Não coloque informações pessoais, registros reais ou arquivos de backup no repositório.
 
-1. Abra o repositório original: https://github.com/angelarsgabriel-tech/my-fitness-journey-v2
-2. Entre na sua conta GitHub.
-3. Toque em **Fork**.
-4. Escolha sua conta como destino e crie o fork.
-5. Abra o repositório que ficou na sua conta.
+## 2. O que você vai copiar
 
-O fork cria uma cópia independente do código. Faça as personalizações no seu próprio repositório.
+A versão de referência está aqui:
 
-### Opção B — baixar e enviar os arquivos
+- Demonstração: https://angelarsgabriel-tech.github.io/my-fitness-journey-v2/
+- Repositório de origem: https://github.com/angelarsgabriel-tech/my-fitness-journey-v2
 
-1. Abra o repositório original.
-2. Use **Code > Download ZIP**.
+O aplicativo usa HTML, CSS e JavaScript. Não é necessário contratar hospedagem ou banco de dados para começar. O GitHub Pages hospeda os arquivos; os registros de cada pessoa ficam no navegador dela.
+
+## 3. Criar uma cópia independente
+
+Cada amiga deve ter seu próprio repositório e seu próprio endereço. Não usem um único endereço compartilhado para os registros pessoais.
+
+### Opção A — Fork (mais simples)
+
+1. Entre na sua conta do GitHub.
+2. Abra o repositório de origem: https://github.com/angelarsgabriel-tech/my-fitness-journey-v2
+3. Clique em **Fork**.
+4. Escolha sua conta pessoal como destino.
+5. Crie o fork.
+6. Abra o repositório que agora aparece na sua conta.
+
+O fork cria uma cópia do código para você. As alterações feitas no seu repositório não alteram automaticamente o aplicativo original.
+
+### Opção B — baixar os arquivos e criar outro repositório
+
+1. Abra o repositório de origem.
+2. Clique em **Code** e depois em **Download ZIP**.
 3. Extraia o arquivo ZIP.
-4. No GitHub, crie um repositório novo, de preferência público para usar o GitHub Pages gratuito.
-5. Envie os arquivos e pastas do projeto para a raiz do repositório. Não envie apenas a pasta externa que contém os arquivos; o \`index.html\` precisa ficar na raiz.
+4. No GitHub, crie um repositório novo.
+5. Envie para a raiz do repositório todos os arquivos e pastas que estavam dentro do ZIP.
+6. Confira se o arquivo index.html está diretamente na raiz, e não escondido dentro de uma segunda pasta.
 
-## 5. Publicar com GitHub Pages
+## 4. Publicar pelo GitHub Pages
 
-1. Abra seu repositório.
+1. Abra seu repositório no GitHub.
 2. Entre em **Settings**.
-3. No menu lateral, escolha **Pages**.
-4. Em **Build and deployment**, selecione **Deploy from a branch**.
-5. Em **Branch**, escolha \`main\` e a pasta \`/ (root)\`.
-6. Salve.
-7. Aguarde o GitHub publicar. A URL costuma seguir o formato:
+3. No menu lateral, abra **Pages**.
+4. Em **Build and deployment**, escolha **Deploy from a branch**.
+5. Em **Branch**, selecione **main**.
+6. Na pasta, selecione **/ (root)**.
+7. Clique em **Save**.
+8. Aguarde a publicação. A página de configuração mostrará o endereço quando estiver pronta.
 
-\`https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/\`
+O endereço de um projeto normalmente segue este formato:
 
-Se a página não abrir imediatamente, aguarde alguns minutos e confira novamente a seção **Pages** do repositório.
+https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/
 
-### Atenção aos caminhos dos arquivos
+A publicação pode levar alguns minutos. A documentação oficial está em:
+https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
 
-O projeto usa caminhos relativos, como \`./app.js\`, \`./styles.css\` e \`./sw.js\`. Mantenha os arquivos e pastas na mesma estrutura. Não remova o \`manifest.json\`, o \`sw.js\` ou a pasta \`icons\`.
+## 5. Conferir se os arquivos estão no lugar certo
 
-## 6. Instalar no celular
+A estrutura esperada é:
 
-### Android (Chrome)
-
-1. Abra a URL publicada no Chrome.
-2. Aguarde a página carregar.
-3. Abra o menu de três pontinhos.
-4. Escolha **Instalar aplicativo** ou **Adicionar à tela inicial** (o texto pode variar).
-5. Confirme.
-
-### iPhone (Safari)
-
-1. Abra a URL no Safari.
-2. Toque em **Compartilhar**.
-3. Escolha **Adicionar à Tela de Início**.
-4. Confirme.
-
-A instalação cria um atalho com aparência de aplicativo. Ela não transforma o projeto em um aplicativo nativo de loja.
-
-## 7. Personalizar o aplicativo
-
-Os principais arquivos são:
-
-| Arquivo | O que você pode mudar |
-|---|---|
-| \`index.html\` | Nome, descrição, textos, abas, formulários e campos |
-| \`styles.css\` | Cores, fontes, espaçamentos, cartões e responsividade |
-| \`app.js\` | Salvamento, cálculos, validações, relatórios e regras |
-| \`manifest.json\` | Nome exibido na instalação, ícones e cores do sistema |
-| \`sw.js\` | Arquivos armazenados em cache e versão do cache |
-| \`icons/\` | Ícones do aplicativo |
-
-### 7.1 Trocar nome e identidade visual
-
-- Em \`index.html\`, altere o título da página, o título do cabeçalho e a descrição.
-- Em \`manifest.json\`, altere \`name\`, \`short_name\`, \`description\`, \`theme_color\` e \`background_color\`.
-- Em \`styles.css\`, altere as variáveis no começo do arquivo. Por exemplo:
-
-\`\`\`css
-:root {
-  --blush: #e8aeba;
-  --blush-deep: #d48d9d;
-  --pink-light: #fff1f3;
-  --nude: #f6e7e4;
-  --beige: #faf3ef;
-}
-\`\`\`
-
-Use cores próprias e confira o contraste dos textos.
-
-### 7.2 Trocar os ícones
-
-Substitua as imagens dentro de \`icons/\` mantendo os nomes e dimensões esperadas:
-
-- \`icon-192.png\`
-- \`icon-512.png\`
-- \`apple-touch-icon.png\`
-
-Se mudar os nomes dos arquivos, atualize também as referências em \`index.html\`, \`manifest.json\` e \`sw.js\`.
-
-### 7.3 Personalizar refeições e categorias
-
-As opções de refeição ficam no HTML do formulário de alimentação. Procure o elemento \`select\` com o identificador \`meal\` e edite as opções.
-
-**Regra importante de contagem:** cada alimento é salvo como um registro individual, mas a quantidade de refeições é calculada por combinação de data + categoria da refeição. Assim, arroz, feijão e frango cadastrados como almoço no mesmo dia representam uma refeição, e não três. Alimentos continuam somando seus próprios nutrientes.
-
-Se criar categorias novas, mantenha os nomes consistentes para que a agregação continue previsível.
-
-### 7.4 Personalizar metas e plano alimentar
-
-A meta de água é opcional e pode ser definida pela pessoa na tela de hidratação. O plano alimentar é preenchido manualmente com as orientações individuais.
-
-Não coloque metas universais de calorias, macros, peso, água ou exercício como se fossem adequadas para todo mundo. Se for registrar um plano nutricional, use as recomendações de um profissional habilitado.
-
-## 8. Como os dados são armazenados
-
-O banco local é o **IndexedDB**, com nome \`MyFitnessJourneyDB\` e versão definida em \`app.js\`.
-
-As coleções atuais são:
-
-| Coleção | Conteúdo |
-|---|---|
-| \`foods\` | Alimentos registrados no diário |
-| \`catalog_foods\` | Catálogo pessoal e favoritos |
-| \`water\` | Registros de água |
-| \`water_goals\` | Meta pessoal de hidratação |
-| \`workouts\` | Atividades físicas |
-| \`body\` | Peso e medidas |
-| \`meal_plans\` | Itens do plano alimentar |
-| \`recipes\` | Receitas |
-| \`reminders\` | Lembretes |
-| \`settings\` | Configurações |
-
-### O que isso significa na prática
-
-- Os dados ficam no navegador e no perfil de usuário daquele dispositivo.
-- Duas pessoas que abrem o mesmo endereço não veem os registros uma da outra.
-- Os dados não são sincronizados automaticamente entre celular e computador.
-- Limpar os dados do site, remover o armazenamento do navegador ou trocar de aparelho pode apagar os registros.
-- O modo offline depende de o aplicativo já ter sido carregado e de os arquivos estarem no cache.
-- A pesquisa na TACO e no Open Food Facts precisa de internet.
-
-**Não apague o armazenamento do navegador para tentar corrigir uma atualização do aplicativo.** Isso pode apagar o banco IndexedDB. Primeiro tente fechar e abrir o aplicativo, atualizar a página ou aguardar a atualização do Service Worker.
-
-## 9. Backup e restauração
-
-1. Abra a aba **Backup**.
-2. Escolha exportar backup.
-3. Guarde o arquivo JSON em local seguro, de preferência também em uma segunda cópia.
-4. Para recuperar, selecione o arquivo JSON na opção de restauração.
-
-**Atenção:** restaurar um backup substitui os registros atuais do aplicativo. Exporte um backup do estado atual antes de restaurar outro arquivo.
-
-O backup contém dados pessoais de saúde e rotina. Não compartilhe o arquivo em grupos ou com terceiros sem revisar seu conteúdo.
-
-## 10. Como funciona a busca de alimentos
-
-A busca usa duas fontes externas:
-
-- **TACO:** base de composição de alimentos e preparações, consultada pelo índice e pelos detalhes disponibilizados em https://brolesi.github.io/taco
-- **Open Food Facts:** base colaborativa de produtos, consultada por https://world.openfoodfacts.org
-
-Os resultados são normalizados para valores nutricionais por 100 g. Ao usar um resultado, o formulário é preenchido e o aplicativo pode recalcular os valores para a quantidade informada em gramas.
-
-Limitações:
-- nem todos os alimentos ou produtos estão cadastrados;
-- produtos podem ter dados incompletos ou enviados por usuários;
-- a unidade em gramas é necessária para o cálculo proporcional automático atual;
-- porções, preparo, marca e rótulo podem alterar os valores;
-- confira o rótulo e ajuste os dados antes de salvar.
-
-A busca depende de serviços externos, que podem mudar, ficar indisponíveis ou impor limites. O aplicativo não controla essas bases.
-
-## 11. Como atualizar o aplicativo com segurança
-
-Quando alterar HTML, CSS, JavaScript, manifesto, ícones ou recursos armazenados em cache:
-
-1. Faça a alteração no seu repositório.
-2. Confira se os nomes e caminhos continuam corretos.
-3. Teste a página publicada.
-4. Se alterar arquivos que o Service Worker armazena, aumente a versão de \`CACHE_NAME\` em \`sw.js\`, por exemplo de \`mfj-v2-cache-v6\` para \`mfj-v2-cache-v7\`.
-5. Publique as alterações e aguarde o GitHub Pages atualizar.
-6. Feche e abra o aplicativo ou atualize a página.
-
-A mudança do nome do cache força a instalação de um novo conjunto de arquivos estáticos. Ela não deve apagar o IndexedDB. **Nunca aumente a versão do banco IndexedDB nem remova coleções sem planejar uma migração**, pois isso pode afetar dados já salvos.
-
-## 12. Estrutura de pastas
-
-A estrutura básica do projeto é:
-
-\`\`\`text
-my-fitness-journey-v2/
+```text
+/
 ├── index.html
 ├── app.js
 ├── styles.css
@@ -250,77 +82,127 @@ my-fitness-journey-v2/
 │   ├── icon-512.png
 │   └── apple-touch-icon.png
 └── docs/
-    ├── GUIA_PARA_CRIAR_SEU_APP.md
-    └── ARQUITETURA_E_MANUTENCAO.md
-\`\`\`
+```
 
-## 13. Testes antes de compartilhar
+Não renomeie nem mova esses arquivos sem atualizar também os caminhos usados pelo HTML, pelo manifesto e pelo Service Worker.
 
-Faça estes testes na sua cópia:
+## 6. Abrir e instalar no celular
 
-- [ ] O endereço do GitHub Pages abre no celular.
-- [ ] As abas de navegação abrem corretamente.
-- [ ] É possível registrar, editar e excluir um alimento.
-- [ ] Três alimentos cadastrados na mesma refeição e data contam como uma refeição.
-- [ ] Calorias e macros somam os alimentos sem duplicação.
-- [ ] É possível registrar água e visualizar o total.
-- [ ] É possível registrar uma atividade física.
-- [ ] É possível registrar peso e medidas.
-- [ ] O catálogo e as receitas mantêm os registros após fechar e reabrir.
-- [ ] A exportação do backup gera um arquivo JSON.
-- [ ] A restauração foi testada com um backup de teste, nunca com o único arquivo de dados importantes.
-- [ ] A pesquisa nutricional funciona quando há internet.
-- [ ] A tela inicial continua abrindo depois de uma atualização.
+### Android
 
-## 14. Privacidade e responsabilidade
+1. Abra o endereço do seu site no Google Chrome.
+2. Aguarde o carregamento completo.
+3. Abra o menu de três pontinhos.
+4. Escolha **Instalar aplicativo** ou **Adicionar à tela inicial**. O texto pode variar conforme a versão do Chrome.
+5. Confirme.
 
-Este projeto foi desenvolvido como ferramenta pessoal de registro, não como prontuário eletrônico, serviço médico ou sistema de aconselhamento nutricional.
+### iPhone
 
-- Não use o aplicativo para diagnosticar, tratar ou substituir orientação profissional.
-- Não presuma que metas ou recomendações de outra pessoa servem para você.
-- Proteja o acesso ao celular e aos arquivos de backup.
-- Como os dados são locais, a pessoa é responsável por manter cópias de segurança.
-- Antes de compartilhar uma versão, remova dados pessoais, registros de exemplo e informações que identifiquem você.
-- Não coloque senhas, tokens ou chaves privadas no código público.
+1. Abra o endereço no Safari.
+2. Toque em **Compartilhar**.
+3. Escolha **Adicionar à Tela de Início**.
+4. Confirme.
 
-## 15. Solução de problemas
+A instalação cria um atalho com aparência de aplicativo. Não é um aplicativo nativo distribuído por loja.
 
-**A página abre, mas os botões não funcionam**
-- Confirme que \`index.html\` carrega \`app.js\`.
-- Confira se os identificadores dos formulários no HTML correspondem aos usados no JavaScript.
-- Abra o console do navegador para procurar erros.
+## 7. Personalizar sem quebrar o aplicativo
 
-**A página não atualiza depois de uma mudança**
-- Confirme se o commit foi publicado no GitHub Pages.
-- Se alterou arquivos em cache, aumente a versão do cache no \`sw.js\`.
-- Feche e abra novamente o site.
-- Não limpe os dados do site sem exportar backup, pois isso pode apagar o IndexedDB.
+Minha recomendação é fazer uma mudança por vez e testar depois de cada publicação.
 
-**O registro não aparece**
-- Confira se o formulário está ligado à função de salvamento.
-- Confira se o IndexedDB foi inicializado.
-- Verifique mensagens de erro no console e na notificação exibida pelo app.
+| Arquivo | O que pode ser personalizado |
+|---|---|
+| index.html | Nome, textos, abas, formulários e campos |
+| styles.css | Cores, fontes, cartões, botões e espaçamentos |
+| app.js | Regras de salvamento, cálculos, validações e relatórios |
+| manifest.json | Nome instalado, descrição, cores e ícones |
+| sw.js | Arquivos em cache e versão do cache |
+| icons/ | Imagens dos ícones |
 
-**A pesquisa de alimentos não encontra resultados**
-- Verifique a conexão.
-- Tente outro termo ou selecione uma fonte específica.
-- Confira manualmente o rótulo e use o cadastro manual se necessário.
+### Trocar o nome
 
-**O aplicativo não instala**
-- Abra a URL publicada por HTTPS.
-- Confira se o manifesto, os ícones e o Service Worker estão acessíveis.
-- Tente pelo navegador compatível do dispositivo.
+No index.html, procure o título da página e o título que aparece no cabeçalho. No manifest.json, altere os campos name, short_name e description.
 
-## 16. Próximos passos para quem está começando
+### Trocar as cores
 
-Se você nunca programou, personalize uma coisa por vez:
+No início de styles.css há variáveis CSS que controlam as cores principais. Altere os valores hexadecimais com cuidado e confira se o texto continua legível.
 
-1. Faça uma cópia do repositório.
-2. Publique sem mudar o código.
-3. Teste o aplicativo.
-4. Troque apenas o nome e as cores.
-5. Publique e teste novamente.
-6. Depois personalize campos e categorias.
-7. Só então altere regras em \`app.js\`.
+### Trocar os ícones
 
-Mantenha sempre uma cópia funcional antes de fazer mudanças maiores. Assim, se algo parar de funcionar, você consegue comparar e voltar atrás.
+Substitua as imagens dentro da pasta icons mantendo os nomes esperados: icon-192.png, icon-512.png e apple-touch-icon.png. Se mudar os nomes, atualize as referências em index.html, manifest.json e sw.js.
+
+### Personalizar categorias de refeição
+
+As opções ficam no formulário de alimentação, no elemento select identificado como meal, dentro de index.html. Se alterar categorias, mantenha os nomes consistentes. O agrupamento das refeições considera data e categoria, ignorando diferenças de acentos, maiúsculas/minúsculas e espaços excedentes.
+
+**Evite editar app.js se ainda não estiver familiarizada com JavaScript.** Comece pelo nome e pelas cores. Faça backup do repositório antes de alterações maiores.
+
+## 8. Como seus dados ficam separados
+
+O aplicativo grava os dados no IndexedDB do navegador. Isso significa:
+
+- cada endereço de site tem seu próprio armazenamento no navegador;
+- duas amigas com repositórios/endereço diferentes não veem os dados uma da outra;
+- duas pessoas que abrem o mesmo endereço no mesmo perfil do navegador compartilham aquele armazenamento local;
+- usar o mesmo endereço em outro aparelho não traz os registros automaticamente;
+- não há sincronização em nuvem nesta versão.
+
+O repositório contém o código, não os registros pessoais. Não envie arquivos JSON de backup para o repositório.
+
+## 9. Backup: faça antes de atualizar ou trocar de aparelho
+
+1. Abra a aba **Backup** no aplicativo.
+2. Toque em **Baixar backup completo (.json)**.
+3. Guarde o arquivo em um local seguro, de preferência com uma segunda cópia.
+4. Para recuperar os dados, escolha o arquivo na seção de restauração e confirme.
+
+**A restauração substitui os dados atuais.** Antes de restaurar, exporte também o estado atual para ter como voltar atrás. Não teste restauração com o único arquivo que contém seus registros importantes.
+
+## 10. Atualizar os arquivos publicados
+
+Quando fizer uma alteração no seu repositório:
+
+1. Salve o arquivo editado e faça commit no GitHub.
+2. Aguarde o GitHub Pages publicar.
+3. Abra novamente seu endereço e teste.
+4. Se alterou arquivos armazenados pelo Service Worker (HTML, CSS, JavaScript, manifesto ou ícones), atualize o nome/versão do cache em sw.js.
+5. Não altere a versão do banco IndexedDB só para atualizar o visual.
+
+A versão do cache e a versão do banco são coisas diferentes. Atualizar o cache não deve apagar os registros do IndexedDB.
+
+**Nunca use “limpar dados do site” como primeira tentativa para corrigir uma atualização.** Isso pode apagar os dados pessoais guardados naquele navegador.
+
+## 11. Checklist antes de começar a usar
+
+- [ ] Meu repositório é uma cópia independente.
+- [ ] O GitHub Pages está publicado.
+- [ ] O endereço abre no celular.
+- [ ] Consigo navegar pelas abas.
+- [ ] Consigo salvar um alimento.
+- [ ] Vários alimentos da mesma refeição contam como uma refeição.
+- [ ] Consigo registrar água.
+- [ ] Consigo registrar exercício e peso.
+- [ ] Consigo consultar os relatórios.
+- [ ] Consigo exportar um backup JSON.
+- [ ] Guardei o backup fora do repositório.
+
+## 12. Se algo não funcionar
+
+**A página mostra 404:** confira se o GitHub Pages está ativado, se a branch main e a pasta root foram selecionadas e se index.html está na raiz.
+
+**A página abre sem estilo:** confira se styles.css está na raiz e se o caminho no index.html continua correto.
+
+**Os botões não funcionam:** confira se app.js está na raiz e se o index.html carrega esse arquivo. Se mexeu no código, procure erros de JavaScript.
+
+**A versão antiga continua aparecendo:** aguarde a publicação, feche e abra a página novamente. Se o Service Worker estiver envolvido, confirme se o cache foi versionado. Não limpe os dados do site sem backup.
+
+**Os alimentos não aparecem na busca:** a pesquisa depende de internet e de bases externas. Tente outro termo ou cadastre os valores manualmente.
+
+**O histórico sumiu:** não limpe nem restaure nada por impulso. Confira se está no mesmo endereço, navegador e perfil em que os dados foram registrados. Se houver backup, preserve o arquivo original e só restaure depois de exportar o estado atual.
+
+## 13. Limites importantes
+
+- Não há login, contas individuais dentro do app ou sincronização entre aparelhos.
+- Os registros ficam no navegador e podem ser perdidos se os dados do site forem removidos.
+- A pesquisa nutricional depende de serviços externos e pode apresentar dados incompletos.
+- Notificações dependem do navegador, das permissões e de o ambiente permitir sua entrega.
+- O aplicativo não prescreve dietas, não diagnostica condições e não substitui profissionais de saúde.
