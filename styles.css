@@ -527,3 +527,13 @@ textarea {
     grid-template-columns: 1fr;
   }
   
+
+
+/* Busca nutricional */
+#foodSearchResults, #foodFavorites { margin-top: 12px; }
+#foodSearchButton:disabled { opacity: .65; cursor: wait; }
+#foodSearchResults .record-item, #foodFavorites .record-item { gap: 12px; }
+@media (max-width: 560px) {
+  #foodSearchResults .record-actions, #foodFavorites .record-actions { width: 100%; }
+  #foodSearchResults .record-actions button, #foodFavorites .record-actions button { flex: 1; }
+}
