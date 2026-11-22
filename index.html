@@ -177,8 +177,7 @@
           <div>
             <label for="foodSearchSource">Fonte</label>
             <select id="foodSearchSource">
-              <option value="all">Todas as fontes</option>
-              <option value="taco">TACO</option>
+              <option value="all">Todas as fontes</option>              <option value="taco">TACO</option>
               <option value="off">Produtos industrializados</option>
             </select>
           </div>
@@ -357,8 +356,7 @@
       </div>
     </section>
 
-    <!-- 4.5 EXERCÍCIOS -->
-    <section id="exercicios" class="tab-section">
+    <!-- 4.5 EXERCÍCIOS -->    <section id="exercicios" class="tab-section">
       <div class="section-head">
         <h2>Atividades físicas 🧘</h2>
       </div>
@@ -455,41 +453,50 @@
     </section>
 
     <!-- 4.7 PESO E MEDIDAS -->
-    <section id="medidas" class="tab-section">
-      <div class="section-head">
-        <h2>Peso e medidas corporais 📏</h2>
-      </div>
 
-      <div class="card">
-        <h3>Nova medição</h3>
-        <form id="bodyForm" class="form-grid">
-          <div>
-            <label for="bodyDate">Data da medição</label>
-            <input id="bodyDate" type="date" required />
-          </div>
-          <div>
-            <label for="weight">Peso (kg)</label>
-            <input id="weight" type="number" min="0" step="0.1" placeholder="Ex.: 64.5" />
-          </div>
-          <div>
-            <label for="waist">Cintura (cm)</label>
-            <input id="waist" type="number" min="0" step="0.1" placeholder="Ex.: 70.0" />
-          </div>
-          <div>
-            <label for="abdomen">Abdômen (cm)</label>
-            <input id="abdomen" type="number" min="0" step="0.1" placeholder="Ex.: 80.0" />
-          </div>
-          <div>
-            <label for="hip">Quadril (cm)</label>
-            <input id="hip" type="number" min="0" step="0.1" placeholder="Ex.: 96.0" />
-          </div>
-          <div>
-            <label for="arm">Braços (cm)</label>
-            <input id="arm" type="number" min="0" step="0.1" placeholder="Ex.: 28.0" />
-          </div>
-          <div>
-            <label for="thigh">Coxas (cm)</label>
-            <input id="thigh" type="number" min="0" step="0.1" placeholder="Ex.: 56.0" />
-          </div>
-          <div>
-            <label for="customMeasureLabel">Medida pe
+<section id="medidas" class="tab-section">
+  <div class="section-head"><h2>Meu peso ⚖️</h2><p class="date-caption">Registre suas pesagens e acompanhe sua evolução ao longo do tempo.</p></div>
+  <div class="card"><h3>Registrar peso</h3><form id="bodyForm" class="form-grid">
+    <div><label for="bodyDate">Data da pesagem</label><input id="bodyDate" type="date" required /></div>
+    <div><label for="weight">Peso (kg)</label><input id="weight" type="number" min="0.1" step="0.1" required placeholder="Ex.: 127,5" /></div>
+    <div class="form-full btn-row"><button id="bodySubmitBtn" type="submit" class="btn-primary">Salvar peso</button></div>
+  </form></div>
+  <div class="card card-nude"><h3>Minha evolução</h3><div id="weightSummary" class="metrics-grid-2"></div><div id="weightChartContainer" class="chart-wrap"></div></div>
+  <div class="card"><h3>Histórico de pesagens</h3><p class="date-caption">Cada registro fica salvo com sua data. Você pode comparar semanas diferentes, editar ou excluir uma pesagem.</p><div id="bodyList"></div></div>
+</section>
+<section id="relatorios" class="tab-section">
+  <div class="section-head"><h2>Meus relatórios 📊</h2><p class="date-caption">Acompanhe os registros feitos no aplicativo.</p></div>
+  <div class="card">
+    <label for="reportPeriod">Período do relatório</label><select id="reportPeriod"><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="all">Todo o histórico</option></select>
+    <div class="metrics-grid">
+      <div class="metric-box"><span class="metric-label">Calorias registradas</span><span id="repKcal" class="metric-value">0 kcal</span><span id="repMacros" class="metric-sub">P: 0g · C: 0g · G: 0g</span></div>
+      <div class="metric-box nude-box"><span class="metric-label">Água registrada</span><span id="repWater" class="metric-value">0 ml</span></div>
+      <div class="metric-box"><span class="metric-label">Atividades físicas</span><span id="repWorkouts" class="metric-value">0</span></div>
+      <div class="metric-box nude-box"><span class="metric-label">Variação de peso</span><span id="repWeightDelta" class="metric-value">Sem dados</span></div>
+    </div>
+    <div class="btn-row"><button type="button" class="btn-primary" onclick="generateReport()">Atualizar relatório</button><button type="button" class="btn-secondary" onclick="exportReportTXT()">Exportar relatório (.txt)</button></div>
+    <h3 style="margin-top:18px">Resumo detalhado</h3><div id="reportTextOutput" class="report-output">Seus registros aparecerão aqui assim que você começar a usar o aplicativo.</div>
+  </div>
+</section>
+<section id="calendario" class="tab-section">
+  <div class="section-head"><h2>Meus lembretes ⏰</h2><p class="date-caption">Organize pequenos compromissos com sua rotina.</p></div>
+  <div class="card"><h3>Criar lembrete</h3><form id="reminderForm" class="form-grid">
+    <div><label for="reminderCategory">Categoria</label><select id="reminderCategory"><option>Alimentação</option><option>Hidratação</option><option>Exercício</option><option>Pesagem</option><option>Autocuidado</option><option>Outro</option></select></div>
+    <div><label for="reminderTime">Horário</label><input id="reminderTime" type="time" required /></div>
+    <div class="form-full"><label for="reminderTitle">O que você quer lembrar?</label><input id="reminderTitle" type="text" required placeholder="Ex.: Registrar minha água" /></div>
+    <div class="form-full"><label for="reminderNotes">Observações (opcional)</label><textarea id="reminderNotes" placeholder="Detalhes do lembrete..."></textarea></div>
+    <div class="form-full btn-row"><button id="reminderSubmitBtn" type="submit" class="btn-primary">Salvar lembrete</button><button type="button" class="btn-secondary" onclick="requestNotificationPermission()">Ativar notificações</button></div>
+  </form><p id="notifPermissionStatus" class="info-banner">As notificações dependem das permissões do navegador e podem exigir que o aplicativo esteja aberto.</p></div>
+  <div class="card"><h3>Resumo de um dia</h3><label for="calendarDateInput">Consultar data</label><input id="calendarDateInput" type="date" /><div id="calendarDaySummary"></div></div>
+  <div class="card"><h3>Lembretes cadastrados</h3><div id="reminderList"></div></div>
+</section>
+<section id="backup" class="tab-section">
+  <div class="section-head"><h2>Backup e segurança 🔐</h2><p class="date-caption">Proteja seu histórico e leve seus registros com você.</p></div>
+  <div class="card"><h3>Exportar meus dados</h3><p>Baixe uma cópia dos seus registros de alimentação, água, exercícios, peso, plano alimentar, receitas, lembretes e configurações.</p><button type="button" class="btn-primary" onclick="exportBackup()">Baixar backup completo (.json)</button></div>
+  <div class="card"><h3>Restaurar um backup</h3><p class="info-banner">Atenção: a restauração substitui os registros atuais pelos dados do arquivo escolhido. Faça primeiro um backup do estado atual.</p><label for="backupFile">Selecionar arquivo de backup (.json)</label><input id="backupFile" type="file" accept=".json,application/json" /><div class="btn-row"><button type="button" class="btn-secondary" onclick="importBackup()">Restaurar backup selecionado</button></div></div>
+  <div class="card"><h3>Onde meus dados ficam?</h3><p>Seus registros são armazenados localmente neste navegador e neste dispositivo. Eles não são sincronizados automaticamente com outros aparelhos. Não limpe os dados do site sem antes exportar um backup.</p></div>
+</section>
+</main>
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+</body>
+</html>
