@@ -1,181 +1,253 @@
-# Arquitetura e manutenção técnica
+# Arquitetura e manutenção técnica — My Fitness Journey V2
 
-Este documento complementa o [guia para criar seu aplicativo](GUIA_PARA_CRIAR_SEU_APP.md) e descreve como a versão atual está organizada.
+Este documento descreve a versão atual do projeto e orienta alterações técnicas sem comprometer os registros locais.
 
 ## 1. Visão geral
 
-A aplicação é um site estático client-side:
+A aplicação é um site estático executado no navegador:
 
-1. O navegador carrega \`index.html\`.
-2. O HTML carrega \`styles.css\` e \`app.js\`.
-3. O JavaScript inicializa o IndexedDB.
-4. Os registros são carregados para o objeto \`state.data\`.
-5. As funções \`render...\` atualizam os elementos da página.
-6. Os formulários gravam as alterações no IndexedDB.
-7. O Service Worker mantém uma cópia dos arquivos estáticos em cache.
+1. O navegador carrega index.html.
+2. O HTML carrega styles.css e app.js.
+3. O JavaScript abre o banco IndexedDB.
+4. Os registros são lidos para state.data.
+5. As funções render... atualizam a interface.
+6. Os formulários gravam alterações no IndexedDB.
+7. O Service Worker armazena arquivos estáticos em cache.
 
-Não existe API própria nem autenticação de usuários. O GitHub Pages hospeda os arquivos, mas não recebe o diário alimentar ou as medições.
+O GitHub Pages hospeda os arquivos do site. Não existe API própria, autenticação, banco remoto ou sincronização de registros entre aparelhos.
 
-## 2. Arquivos principais
+## 2. Arquivos
 
-### \`index.html\`
-Contém a estrutura visual, navegação, formulários, campos e áreas onde os dados são renderizados. Os identificadores \`id\` são usados pelo JavaScript; alterar um identificador exige atualizar todas as referências correspondentes em \`app.js\`.
+| Arquivo | Responsabilidade |
+|---|---|
+| index.html | Estrutura, navegação, formulários e elementos de interface |
+| styles.css | Identidade visual, componentes, layout e responsividade |
+| app.js | Estado, banco local, validações, CRUD, cálculos, busca, relatórios, backup e inicialização |
+| manifest.json | Nome, ícones, cores e parâmetros de instalação PWA |
+| sw.js | Lista de arquivos em cache e estratégia de atualização |
+| icons/ | Ícones usados pelo navegador e pela instalação |
 
-### \`styles.css\`
-Contém variáveis de cor, estilos dos cartões, botões, formulários, listas, gráficos e regras responsivas para telas menores.
+A navegação atual contém: inicio, alimentacao, exercicios, agua, medidas, relatorios, calendario e backup. As seções de Plano Alimentar e Receitas foram removidas da interface. Funções e coleções antigas ainda podem permanecer no JavaScript/banco por compatibilidade.
 
-### \`app.js\`
-Contém o estado da aplicação, acesso ao IndexedDB, validações, salvamento, edição, exclusão, cálculos, relatórios, backup, busca nutricional e inicialização.
+## 3. Inicialização
 
-### \`manifest.json\`
-Define nome, nome curto, idioma, cores, orientação, modo de exibição, URL inicial e ícones usados na instalação PWA.
+O fluxo principal ocorre no evento DOMContentLoaded:
 
-### \`sw.js\`
-Define os arquivos em cache e a estratégia de cache. A constante \`CACHE_NAME\` deve ser atualizada quando os arquivos estáticos em cache mudarem.
+1. Define datas padrão nos formulários.
+2. Associa os eventos dos formulários ativos.
+3. Abre o IndexedDB por openDatabase().
+4. Executa migrateLegacyLocalStorage() para tentar importar dados legados.
+5. Executa refreshAllData() para carregar as coleções.
+6. Executa renderAll() e generateReport().
+7. Verifica lembretes e agenda nova verificação a cada 30 segundos enquanto a página está aberta.
+8. Registra o Service Worker.
 
-## 3. Estado em memória e persistência
+Se a inicialização do banco falhar, o app exibe uma mensagem de erro. Não confunda falha de renderização com perda definitiva dos dados: primeiro investigue o armazenamento e a origem do site.
 
-O objeto \`state\` mantém:
-- \`db\`: conexão com IndexedDB;
-- \`activeTab\`: aba selecionada;
-- \`data\`: arrays carregados de cada coleção;
-- \`editing\`: IDs dos registros que estão em edição;
-- \`notifiedToday\`: controle temporário de lembretes já exibidos.
+## 4. Estado em memória
 
-O estado em memória não é a fonte permanente. O IndexedDB é o armazenamento persistente. Depois de salvar ou excluir, o aplicativo atualiza os dados com \`refreshAllData()\` e redesenha a interface com \`renderAll()\`.
+O objeto state mantém:
 
-## 4. Banco IndexedDB
+- db: conexão aberta com IndexedDB;
+- activeTab: seção ativa;
+- data: arrays carregados de cada coleção;
+- editing: IDs dos registros em edição;
+- notifiedToday: conjunto temporário para evitar repetir notificações no mesmo dia.
 
-Configuração atual:
-- Nome: \`MyFitnessJourneyDB\`
-- Versão: \`2\`
-- Chave primária: \`id\`
-- Índice de data criado para coleções aplicáveis.
+O estado em memória não é o armazenamento permanente. O IndexedDB é a fonte persistente. Depois de operações de gravação ou exclusão, o app recarrega os dados com refreshAllData() e redesenha a interface com renderAll().
+
+## 5. Banco de dados IndexedDB
+
+Configuração atual em app.js:
+
+- Nome: MyFitnessJourneyDB
+- Versão: 2
+- Chave primária dos stores: id
+- Índice date nas coleções aplicáveis.
 
 Coleções:
-- \`foods\`
-- \`catalog_foods\`
-- \`water\`
-- \`water_goals\`
-- \`workouts\`
-- \`body\`
-- \`meal_plans\`
-- \`recipes\`
-- \`reminders\`
-- \`settings\`
 
-Cada registro tem um identificador próprio gerado por \`uid()\`. A função \`idbPut()\` aguarda a conclusão da transação antes de informar sucesso. Isso reduz o risco de a interface anunciar que salvou antes da gravação terminar.
+| Store | Uso |
+|---|---|
+| foods | Alimentos registrados no diário |
+| catalog_foods | Catálogo pessoal e favoritos |
+| water | Registros de consumo de água |
+| water_goals | Meta diária de hidratação |
+| workouts | Atividades físicas |
+| body | Registros de peso e campos legados eventualmente preservados |
+| meal_plans | Coleção mantida por compatibilidade; sem aba ativa |
+| recipes | Coleção mantida por compatibilidade; sem aba ativa |
+| reminders | Lembretes |
+| settings | Configurações |
 
-### Migrações
+### Regras críticas de persistência
 
-A criação e atualização das coleções ocorre em \`openDatabase()\`. A migração de dados legados em localStorage é feita por \`migrateLegacyLocalStorage()\`.
+- openDatabase() cria stores ausentes e aplica a migração de esquema prevista.
+- idbPut() grava um registro e aguarda a conclusão da transação.
+- idbGetAll() lê uma coleção em modo readonly.
+- idbDelete() exclui apenas o registro solicitado.
+- idbClearAndBulkPut() limpa e repopula uma coleção; no fluxo atual, é usada durante a restauração explícita de backup, após confirmação.
 
-Se for necessário alterar o esquema:
-1. Faça backup dos dados de teste.
-2. Planeje a migração em \`onupgradeneeded\`.
-3. Aumente \`DB_VERSION\` somente quando a estrutura do banco realmente mudar.
-4. Não remova coleções ou campos sem migrar os registros existentes.
-5. Teste atualização a partir da versão anterior, não apenas instalação limpa.
+Não chame idbClearAndBulkPut() durante a inicialização ou atualização normal. Não adicione indexedDB.deleteDatabase() ao fluxo de atualização. Não altere DB_VERSION sem uma mudança real de esquema e um plano de migração testado.
 
-## 5. Modelo de registro e regra de refeição
+## 6. Modelo de alimento e agrupamento de refeições
 
-Um alimento no diário é um registro individual com campos como:
-- \`id\`
-- \`date\`
-- \`meal\`
-- \`name\`
-- \`amount\`
-- \`unit\`
-- \`calories\`
-- \`protein\`
-- \`carbs\`
-- \`fat\`
-- \`source\` (quando veio da busca nutricional)
+Os alimentos são armazenados individualmente em foods. Campos comuns:
 
-O agrupamento visual e a contagem de refeições usam a combinação de data e categoria:
+- id
+- date
+- meal
+- name
+- amount
+- unit
+- calories
+- protein
+- carbs
+- fat
+- source
 
-\`\`\`js
-const key = date + "::" + normalizeMealGroupKey(meal);
-\`\`\`
+A regra de agrupamento usa data e categoria da refeição:
 
-A normalização remove espaços excedentes, ignora diferença entre maiúsculas/minúsculas e remove acentos. Os alimentos continuam separados no banco. Calorias e macronutrientes são somados a partir dos registros individuais, sem duplicar itens.
+    chave = data + "::" + normalizeMealGroupKey(categoria)
 
-**Não substitua os registros individuais por um único registro consolidado de refeição.** Isso prejudicaria a edição e a exclusão de cada alimento.
+normalizeMealGroupKey() remove acentos, normaliza maiúsculas/minúsculas, elimina espaços nas extremidades e reduz espaços repetidos.
 
-## 6. Ciclo de um formulário
+Consequência: arroz, feijão e frango cadastrados com a mesma data e categoria contam como uma refeição, embora permaneçam três registros individuais. Nutrientes são somados a partir dos registros individuais.
 
-O padrão usado nos módulos é:
-
-1. O formulário recebe um evento \`submit\`.
-2. A função de salvamento chama \`preventDefault()\`.
-3. Os campos são lidos e validados.
-4. Se houver ID de edição, o mesmo ID é reutilizado; caso contrário, um novo ID é gerado.
-5. O registro é persistido no IndexedDB.
-6. O formulário é limpo e o estado de edição é zerado.
-7. Os dados são recarregados e a interface é renderizada novamente.
-8. Uma mensagem informa o resultado.
-
-Ao criar um módulo novo, mantenha esse ciclo consistente e trate erros de gravação.
+**Não consolide os alimentos em um único registro de refeição.** Isso prejudica a edição e a exclusão individual e pode causar duplicação ou perda de informação.
 
 ## 7. Busca nutricional
 
-Constantes atuais em \`app.js\`:
-- \`TACO_API_BASE = 'https://brolesi.github.io/taco'\`
-- \`OFF_SEARCH_BASE = 'https://world.openfoodfacts.org/cgi/search.pl'\`
+Constantes atuais em app.js:
 
-O fluxo:
-1. \`handleFoodSearch()\` lê o termo e a fonte selecionada.
-2. \`searchTacoFoods()\` consulta o índice TACO.
-3. \`getTacoNutrition()\` busca os detalhes nutricionais do alimento selecionado.
-4. \`searchOpenFoodFacts()\` consulta produtos industrializados.
-5. \`normalizeNutritionResult()\` padroniza nome, origem e nutrientes por 100 g.
-6. \`useNutritionSearchResult()\` preenche o formulário.
-7. \`recalculateNutritionForAmount()\` ajusta valores quando a quantidade em gramas muda.
-8. \`favoriteNutritionSearchResult()\` salva o item no catálogo pessoal.
+- TACO_API_BASE: https://brolesi.github.io/taco
+- OFF_SEARCH_BASE: https://world.openfoodfacts.org/cgi/search.pl
 
-Os dados de fontes externas são referências, não garantia de exatidão. A interface orienta a pessoa a conferir marca, porção e valores.
+Fluxo:
 
-## 8. Backup
+1. handleFoodSearch() lê o termo e a fonte selecionada.
+2. searchTacoFoods() consulta o índice TACO.
+3. getTacoNutrition() busca os detalhes de um item TACO.
+4. searchOpenFoodFacts() consulta produtos industrializados.
+5. normalizeNutritionResult() padroniza os campos nutricionais por 100 g.
+6. useNutritionSearchResult() preenche o formulário, sem salvar o diário.
+7. recalculateNutritionForAmount() recalcula os valores quando a unidade é grama.
+8. favoriteNutritionSearchResult() salva um favorito em catalog_foods.
 
-\`exportBackup()\` exporta as coleções do IndexedDB em JSON, incluindo versão do banco e data de exportação.
+As fontes são externas e podem mudar ou ficar indisponíveis. Os dados são referências, não garantia de precisão. A interface deve continuar permitindo conferência e ajuste manual.
 
-\`importBackup()\` valida a estrutura, solicita confirmação e substitui cada coleção pelos registros do arquivo.
+## 8. Regras dos módulos atuais
 
-A restauração é destrutiva para o conteúdo atual. Não execute importação sem confirmação explícita e backup do estado que será substituído.
+### Alimentação
+- Formulário foodForm chama saveMeal().
+- Catálogo catalogFoodForm chama saveCatalogFood().
+- Busca nutricional precisa de internet.
+- Favoritos são armazenados em catalog_foods.
+- A contagem de refeições é agrupada por data + categoria.
 
-## 9. Service Worker e cache
+### Exercícios
+- workoutForm chama saveWorkout().
+- Armazena modalidade, duração, data, horário e observações.
+- Não calcula calorias gastas.
 
-O Service Worker usa uma lista explícita de arquivos em \`ASSETS\`. Quando publicar uma alteração em HTML, CSS, JavaScript, manifesto ou ícones:
+### Hidratação
+- waterForm chama saveWater().
+- waterGoalForm chama saveWaterGoal().
+- A meta é opcional e fica em water_goals.
 
-1. Verifique se o recurso está na lista \`ASSETS\`.
-2. Atualize \`CACHE_NAME\` para uma nova versão.
-3. Publique o commit.
-4. Teste em uma nova abertura do site.
+### Peso
+- bodyForm chama saveBodyMeasurement().
+- A interface atual registra peso e data.
+- O módulo apresenta gráfico, histórico e comparação entre o primeiro e o último registro.
+- Campos antigos eventualmente presentes em registros body são preservados ao editar, mas não são editáveis pela interface atual.
 
-O Service Worker remove caches antigos com nome diferente. Isso não deve ser confundido com o IndexedDB: são armazenamentos distintos. Não limpe o IndexedDB para atualizar os arquivos.
+### Relatórios
+- generateReport() agrega alimentos, água, exercícios e peso.
+- Períodos: 7 dias, 30 dias e todo o histórico.
+- exportReportTXT() gera um arquivo TXT.
 
-A estratégia atual tenta servir o cache primeiro e, se não houver cópia, busca a rede. Se a rede falhar, tenta retornar \`index.html\`.
+### Lembretes
+- saveReminder() grava lembretes.
+- checkDueReminders() verifica a hora atual a cada 30 segundos enquanto o app está aberto.
+- Notificações do sistema dependem de suporte e permissão; não há garantia de execução em segundo plano.
 
-## 10. Segurança e privacidade
+## 9. Backup e restauração
 
-- Não há login ou separação de perfis dentro do app.
-- O isolamento é feito pelo armazenamento do navegador e pela origem do site.
-- Dados não são enviados para um servidor próprio, mas consultas nutricionais enviam o termo de busca aos serviços externos.
-- Evite inserir dados sensíveis desnecessários.
-- Não publique arquivos de backup, tokens ou informações pessoais no repositório.
-- O repositório público contém o código, não deve conter dados reais de usuários.
+exportBackup() exporta as coleções definidas em STORES para um JSON, incluindo nome do app, versão do banco, data de exportação e arrays de cada coleção.
 
-## 11. Checklist técnico de publicação
+importBackup():
 
-- [ ] IDs usados pelo JavaScript existem no HTML.
-- [ ] Formulários têm seus listeners associados.
-- [ ] O JavaScript não apresenta erros de sintaxe.
-- [ ] A inicialização do IndexedDB termina antes de renderizar dados.
-- [ ] Salvamento espera a conclusão da transação.
-- [ ] Editar mantém o ID original.
+1. Lê o arquivo JSON selecionado.
+2. Valida se existe o objeto stores.
+3. Confere se cada store esperado é um array.
+4. Solicita confirmação explícita.
+5. Para cada store, usa idbClearAndBulkPut() para substituir os registros.
+6. Recarrega os dados e redesenha a interface.
+
+A restauração é destrutiva para o conteúdo atual. Antes de restaurar, exporte o estado atual. Não use backup de outra versão sem conferir compatibilidade do esquema.
+
+O JSON inclui as coleções de compatibilidade meal_plans e recipes, embora não existam abas correspondentes na interface atual.
+
+## 10. Service Worker e cache
+
+sw.js define:
+
+- CACHE_NAME: identificador da versão dos arquivos;
+- ASSETS: arquivos estáticos pré-cacheados;
+- install: cria o cache e baixa os recursos;
+- activate: remove caches antigos com nome diferente e assume o controle;
+- fetch: tenta responder pelo cache antes da rede.
+
+A versão atual do repositório no momento desta documentação usa mfj-v2-cache-v19.
+
+### Quando atualizar a versão do cache
+
+Se alterar arquivos servidos pelo Service Worker (HTML, CSS, JavaScript, manifesto ou ícones), aumente o sufixo de CACHE_NAME e confira a lista ASSETS. Exemplo: v19 para v20.
+
+Atualizar o cache de arquivos não deve apagar IndexedDB. São armazenamentos separados.
+
+**Nunca use a limpeza do IndexedDB como mecanismo de atualização.** Não use indexedDB.deleteDatabase() para resolver cache antigo. Não remova os stores existentes.
+
+## 11. Como alterar o esquema com segurança
+
+Só aumente DB_VERSION se a estrutura do IndexedDB realmente mudar.
+
+Antes de uma migração:
+
+1. Exporte um backup.
+2. Faça uma cópia do repositório.
+3. Planeje a transformação de cada registro antigo.
+4. Implemente a migração em onupgradeneeded.
+5. Teste a atualização a partir de uma instalação com dados reais fictícios na versão anterior.
+6. Confira contagens e conteúdo das coleções antes e depois.
+7. Nunca remova stores sem uma decisão explícita e migração validada.
+
+Não teste alterações destrutivas no banco principal usado por pessoas.
+
+## 12. Privacidade e segurança
+
+- Não há autenticação ou contas dentro do app.
+- Os registros ficam no IndexedDB do navegador e da origem do site.
+- Não há sincronização remota.
+- A busca nutricional envia o termo pesquisado às bases externas.
+- Não coloque dados pessoais ou backups no repositório.
+- Não inclua tokens, senhas ou chaves privadas no código.
+- O repositório público deve conter somente código e recursos que possam ser publicados.
+
+## 13. Checklist técnico antes de publicar
+
+- [ ] Os IDs usados em app.js existem no index.html.
+- [ ] Os formulários ativos têm seus eventos associados.
+- [ ] O JavaScript passa por verificação de sintaxe.
+- [ ] O IndexedDB inicializa antes da renderização.
+- [ ] O salvamento aguarda a conclusão da transação.
+- [ ] Editar mantém o ID do registro.
 - [ ] Excluir pede confirmação.
 - [ ] A regra de agrupamento não altera os registros individuais.
-- [ ] Backup e restauração foram testados em dados fictícios.
-- [ ] \`manifest.json\` e ícones estão acessíveis.
-- [ ] \`sw.js\` inclui os arquivos certos e usa novo nome de cache.
-- [ ] O app foi testado no celular e em modo offline.
+- [ ] Busca nutricional funciona com internet e falha de forma controlada sem conexão.
+- [ ] Backup exporta todas as coleções esperadas.
+- [ ] Restauração foi testada com dados fictícios e backup prévio.
+- [ ] manifest.json e ícones estão acessíveis.
+- [ ] sw.js inclui os arquivos corretos e tem nova versão de cache quando necessário.
+- [ ] O app foi testado no celular e após uma atualização.
+- [ ] Nenhuma rotina de atualização apaga ou recria o IndexedDB.
