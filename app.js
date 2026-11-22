@@ -587,6 +587,48 @@ async function saveMealPlan(e) {
   showToast('Plano alimentar salvo!', 'success');
 }
 
+
+async function importMealPlanJSON() {
+  const input = document.getElementById('planImportJSON');
+  if (!input) return;
+  let items;
+  try {
+    items = JSON.parse(input.value);
+  } catch {
+    return showToast('O conteúdo não está em um JSON válido.', 'error');
+  }
+  if (!Array.isArray(items) || !items.length) {
+    return showToast('O plano precisa conter uma lista de refeições.', 'error');
+  }
+  const valid = items.every(item =>
+    item && typeof item.mealName === 'string' &&
+    typeof item.foodsRecommended === 'string' &&
+    item.mealName.trim() && item.foodsRecommended.trim()
+  );
+  if (!valid) return showToast('Confira os campos de refeição e alimentos do plano.', 'error');
+
+  const existingKeys = new Set(state.data.meal_plans.map(item => item.planKey).filter(Boolean));
+  const newItems = items.filter(item => !item.planKey || !existingKeys.has(item.planKey));
+  if (!newItems.length) return showToast('Esse plano já foi importado. Nenhum registro duplicado foi criado.', 'info');
+
+  for (const item of newItems) {
+    await idbPut('meal_plans', {
+      id: uid(),
+      planKey: item.planKey || '',
+      dayLabel: 'Diário',
+      mealName: item.mealName.trim(),
+      foodsRecommended: item.foodsRecommended.trim(),
+      quantities: String(item.quantities || ''),
+      guidance: String(item.guidance || ''),
+      completed: false,
+      date: todayISO()
+    });
+  }
+  await refreshAllData();
+  renderAll();
+  showToast(`${newItems.length} refeições importadas para o seu plano!`, 'success');
+}
+
 function editMealPlan(id) {
   const item = state.data.meal_plans.find(x => x.id === id);
   if (!item) return;
