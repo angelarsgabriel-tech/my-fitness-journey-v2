@@ -1210,7 +1210,14 @@ function checkDueReminders() {
 function renderCalendarAndReminders() {
   renderReminderPermissionStatus();
 
-  const selDate = document.getElementById('calendarDateInput').value || todayISO();
+  // Algumas versões da interface não incluem o módulo de calendário/lembretes.
+  // A ausência desses elementos não pode interromper os demais módulos.
+  const calendarDateEl = document.getElementById('calendarDateInput');
+  const calendarSummaryEl = document.getElementById('calendarDaySummary');
+  const reminderListEl = document.getElementById('reminderList');
+  if (!calendarDateEl || !calendarSummaryEl || !reminderListEl) return;
+
+  const selDate = calendarDateEl.value || todayISO();
   const dayFoods = state.data.foods.filter(x => x.date === selDate);
   const dayWater = state.data.water.filter(x => x.date === selDate);
   const dayWorkouts = state.data.workouts.filter(x => x.date === selDate);
@@ -1219,7 +1226,7 @@ function renderCalendarAndReminders() {
   const waterSum = dayWater.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const kcalSum = dayFoods.reduce((s, x) => s + (Number(x.calories) || 0), 0);
 
-  document.getElementById('calendarDaySummary').innerHTML = `
+  calendarSummaryEl.innerHTML = `
     <div class="metrics-grid-2">
       <div class="metric-box">
         <span class="metric-label">Refeições em ${formatDateBR(selDate)}</span>
@@ -1234,7 +1241,7 @@ function renderCalendarAndReminders() {
     </div>
   `;
 
-  const listEl = document.getElementById('reminderList');
+  const listEl = reminderListEl;
   if (!state.data.reminders.length) {
     listEl.innerHTML = '<small>Nenhum lembrete cadastrado ainda.</small>';
     return;
@@ -1374,7 +1381,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('waterDate').value = iso;
   document.getElementById('waterTime').value = nowTimeHHMM();
   document.getElementById('bodyDate').value = iso;
-  document.getElementById('calendarDateInput').value = iso;
+  const calendarDateInput = document.getElementById('calendarDateInput');
+  if (calendarDateInput) calendarDateInput.value = iso;
 
   // Bind formulários
   document.getElementById('catalogFoodForm').addEventListener('submit', saveCatalogFood);
@@ -1385,7 +1393,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('waterGoalForm').addEventListener('submit', saveWaterGoal);
   document.getElementById('waterForm').addEventListener('submit', saveWater);
   document.getElementById('bodyForm').addEventListener('submit', saveBodyMeasurement);
-  document.getElementById('reminderForm').addEventListener('submit', saveReminder);
+  const reminderForm = document.getElementById('reminderForm');
+  if (reminderForm) reminderForm.addEventListener('submit', saveReminder);
 
   window.addEventListener('online', updateNetworkStatus);
   window.addEventListener('offline', updateNetworkStatus);
