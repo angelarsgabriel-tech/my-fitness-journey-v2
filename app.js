@@ -589,6 +589,7 @@ async function saveMealPlan(e) {
 
 
 async function importMealPlanJSON() {
+  try {
   const input = document.getElementById('planImportJSON');
   if (!input) return;
   let items;
@@ -627,6 +628,10 @@ async function importMealPlanJSON() {
   await refreshAllData();
   renderAll();
   showToast(`${newItems.length} refeições importadas para o seu plano!`, 'success');
+  } catch (error) {
+    console.error('Erro ao importar plano alimentar:', error);
+    showToast(`Não foi possível importar o plano: ${error.message || error}`, 'error');
+  }
 }
 
 function editMealPlan(id) {
@@ -1446,6 +1451,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('catalogFoodForm').addEventListener('submit', saveCatalogFood);
   document.getElementById('foodForm').addEventListener('submit', saveMeal);
   document.getElementById('mealPlanForm').addEventListener('submit', saveMealPlan);
+  const planImportBtn = document.getElementById('planImportBtn');
+  if (planImportBtn) planImportBtn.addEventListener('click', importMealPlanJSON);
   document.getElementById('recipeForm').addEventListener('submit', saveRecipe);
   document.getElementById('workoutForm').addEventListener('submit', saveWorkout);
   document.getElementById('waterGoalForm').addEventListener('submit', saveWaterGoal);
