@@ -403,6 +403,7 @@ async function saveMeal(e) {
     protein,
     carbs,
     fat,
+    source: document.getElementById('foodCalories').dataset.source || '',
     date
   };
 
@@ -1518,6 +1519,10 @@ function useNutritionSearchResult(index) {
   document.getElementById('carbs').value = item.carbs.toFixed(1);
   document.getElementById('fat').value = item.fat.toFixed(1);
   document.getElementById('foodCalories').dataset.source = item.sourceLabel;
+  document.getElementById('foodCalories').dataset.base = String(item.kcal);
+  document.getElementById('protein').dataset.base = String(item.protein);
+  document.getElementById('carbs').dataset.base = String(item.carbs);
+  document.getElementById('fat').dataset.base = String(item.fat);
   document.getElementById('foodSearchStatus').textContent = 'Valores preenchidos para 100 g. Altere a quantidade e ajuste os nutrientes, se necessário, antes de salvar.';
   document.getElementById('foodForm').scrollIntoView({behavior: 'smooth', block: 'start'});
   document.getElementById('foodAmount').focus({preventScroll: true});
@@ -1589,8 +1594,29 @@ async function handleFoodSearch(event) {
   }
 }
 
+function recalculateNutritionForAmount() {
+  const amount = Number(document.getElementById('foodAmount').value);
+  const unit = document.getElementById('foodUnit').value.trim().toLowerCase();
+  if (!Number.isFinite(amount) || amount < 0 || !['g', 'grama', 'gramas'].includes(unit)) return;
+  const factor = amount / 100;
+  const fields = [
+    ['foodCalories', 'base'],
+    ['protein', 'base'],
+    ['carbs', 'base'],
+    ['fat', 'base']
+  ];
+  fields.forEach(([id, key]) => {
+    const field = document.getElementById(id);
+    if (field.dataset[key] !== undefined) field.value = (Number(field.dataset[key]) * factor).toFixed(1);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const searchForm = document.getElementById('foodSearchForm');
   if (searchForm) searchForm.addEventListener('submit', handleFoodSearch);
+  const amountInput = document.getElementById('foodAmount');
+  const unitInput = document.getElementById('foodUnit');
+  if (amountInput) amountInput.addEventListener('input', recalculateNutritionForAmount);
+  if (unitInput) unitInput.addEventListener('change', recalculateNutritionForAmount);
   renderFoodFavorites();
 });
