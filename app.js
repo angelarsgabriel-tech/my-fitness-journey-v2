@@ -1405,3 +1405,192 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   registerServiceWorker();
 });
+
+
+/* ---------- Busca nutricional: TACO + Open Food Facts ---------- */
+const TACO_API_BASE = 'https://brolesi.github.io/taco';
+const OFF_SEARCH_BASE = 'https://world.openfoodfacts.org/cgi/search.pl';
+let tacoFoodIndex = null;
+
+function nutritionNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function normalizeNutritionResult(item, source) {
+  return {
+    source,
+    sourceLabel: source === 'TACO' ? 'TACO · por 100 g' : 'Open Food Facts · por 100 g',
+    sourceId: String(item.id ?? item.code ?? ''),
+    name: item.description || item.product_name || item.name || 'Alimento sem nome',
+    brand: item.brands || '',
+    kcal: nutritionNumber(item.energy_kcal ?? item['energy-kcal_100g'] ?? item['energy-kcal']),
+    protein: nutritionNumber(item.protein_g ?? item.proteins_100g ?? item.proteins),
+    carbs: nutritionNumber(item.carbohydrate_g ?? item.carbohydrates_100g ?? item.carbohydrates),
+    fat: nutritionNumber(item.lipids_g ?? item.fat_100g ?? item.fat),
+    image: item.image_front_small_url || '',
+    barcode: item.code || ''
+  };
+}
+
+async function searchTacoFoods(query) {
+  if (!tacoFoodIndex) {
+    const response = await fetch(TACO_API_BASE + '/foods.json');
+    if (!response.ok) throw new Error('Não foi possível carregar a base TACO.');
+    const data = await response.json();
+    tacoFoodIndex = Array.isArray(data.foods) ? data.foods : [];
+  }
+  const normalized = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return tacoFoodIndex
+    .filter(food => (food.description || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalized))
+    .slice(0, 12)
+    .map(food => ({...food, source: 'TACO'}));
+}
+
+async function getTacoNutrition(id) {
+  const response = await fetch(TACO_API_BASE + '/foods/' + encodeURIComponent(id) + '.json');
+  if (!response.ok) throw new Error('Não foi possível consultar a composição deste alimento na TACO.');
+  return normalizeNutritionResult(await response.json(), 'TACO');
+}
+
+async function searchOpenFoodFacts(query) {
+  const params = new URLSearchParams({
+    search_terms: query,
+    search_simple: '1',
+    action: 'process',
+    json: '1',
+    page_size: '12',
+    fields: 'code,product_name,brands,image_front_small_url,nutriments'
+  });
+  const response = await fetch(OFF_SEARCH_BASE + '?' + params.toString(), {
+    headers: {'Accept': 'application/json'}
+  });
+  if (!response.ok) throw new Error('Não foi possível consultar o Open Food Facts.');
+  const data = await response.json();
+  return (data.products || []).filter(p => p.product_name && p.nutriments).map(p => {
+    const n = p.nutriments || {};
+    return normalizeNutritionResult({
+      ...p,
+      'energy-kcal_100g': n['energy-kcal_100g'] ?? (Number(n['energy_100g']) / 4.184),
+      proteins_100g: n.proteins_100g,
+      carbohydrates_100g: n.carbohydrates_100g,
+      fat_100g: n.fat_100g
+    }, 'Open Food Facts');
+  }).filter(p => p.kcal || p.protein || p.carbs || p.fat);
+}
+
+function renderFoodSearchResults(items) {
+  const el = document.getElementById('foodSearchResults');
+  if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<small>Nenhum resultado com composição nutricional disponível. Tente outro termo ou cadastre os valores do rótulo manualmente.</small>';
+    return;
+  }
+  el.innerHTML = items.map((item, index) => {
+    const safeName = escapeHTML(item.name);
+    const safeBrand = escapeHTML(item.brand || '');
+    const source = escapeHTML(item.sourceLabel);
+    return `
+      <div class="record-item">
+        <div class="record-body">
+          <div class="record-title">${safeName}</div>
+          <div class="record-meta">${safeBrand ? safeBrand + ' · ' : ''}${source}<br>
+            ${item.kcal.toFixed(1)} kcal · P: ${item.protein.toFixed(1)} g · C: ${item.carbs.toFixed(1)} g · G: ${item.fat.toFixed(1)} g
+          </div>
+        </div>
+        <div class="record-actions">
+          <button class="btn-primary" type="button" onclick="useNutritionSearchResult(${index})">Usar</button>
+          <button class="btn-secondary" type="button" onclick="favoriteNutritionSearchResult(${index})">♡ Favoritar</button>
+        </div>
+      </div>`;
+  }).join('');
+  window.currentNutritionSearchResults = items;
+}
+
+function useNutritionSearchResult(index) {
+  const item = (window.currentNutritionSearchResults || [])[index];
+  if (!item) return;
+  document.getElementById('foodName').value = item.name;
+  document.getElementById('foodAmount').value = '100';
+  document.getElementById('foodUnit').value = 'g';
+  document.getElementById('foodCalories').value = item.kcal.toFixed(1);
+  document.getElementById('protein').value = item.protein.toFixed(1);
+  document.getElementById('carbs').value = item.carbs.toFixed(1);
+  document.getElementById('fat').value = item.fat.toFixed(1);
+  document.getElementById('foodCalories').dataset.source = item.sourceLabel;
+  document.getElementById('foodSearchStatus').textContent = 'Valores preenchidos para 100 g. Altere a quantidade e ajuste os nutrientes, se necessário, antes de salvar.';
+  document.getElementById('foodForm').scrollIntoView({behavior: 'smooth', block: 'start'});
+  document.getElementById('foodAmount').focus({preventScroll: true});
+}
+
+async function favoriteNutritionSearchResult(index) {
+  const item = (window.currentNutritionSearchResults || [])[index];
+  if (!item) return;
+  const exists = state.data.catalog_foods.some(x => x.name.toLowerCase() === item.name.toLowerCase() && (x.source || '') === item.source);
+  if (exists) return showToast('Este alimento já está no seu catálogo.', 'info');
+  await idbPut('catalog_foods', {
+    id: uid(), name: item.name, unit: '100 g',
+    calories: item.kcal, protein: item.protein, carbs: item.carbs, fat: item.fat,
+    source: item.sourceLabel, favorite: true, date: todayISO()
+  });
+  await refreshAllData();
+  renderFoodModule();
+  renderFoodFavorites();
+  showToast('Alimento salvo nos favoritos!', 'success');
+}
+
+function renderFoodFavorites() {
+  const el = document.getElementById('foodFavorites');
+  if (!el) return;
+  const favorites = state.data.catalog_foods.filter(x => x.favorite);
+  if (!favorites.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<h3 style="margin-top:18px">Meus alimentos favoritos ⭐</h3>' + favorites.map(item => `
+    <div class="record-item">
+      <div class="record-body">
+        <div class="record-title">${escapeHTML(item.name)}</div>
+        <div class="record-meta">${Number(item.calories)||0} kcal · P: ${Number(item.protein)||0} g · C: ${Number(item.carbs)||0} g · G: ${Number(item.fat)||0} g · ${escapeHTML(item.source || 'Catálogo pessoal')}</div>
+      </div>
+      <div class="record-actions"><button class="btn-secondary" type="button" onclick="useCatalogFoodInMeal('${item.id}')">Usar</button></div>
+    </div>`).join('');
+}
+
+async function handleFoodSearch(event) {
+  event.preventDefault();
+  const query = document.getElementById('foodSearchQuery').value.trim();
+  const source = document.getElementById('foodSearchSource').value;
+  const status = document.getElementById('foodSearchStatus');
+  const button = document.getElementById('foodSearchButton');
+  if (!query) return;
+  button.disabled = true;
+  status.textContent = 'Buscando na base nutricional…';
+  document.getElementById('foodSearchResults').innerHTML = '';
+  const results = [];
+  const errors = [];
+  try {
+    if (source === 'all' || source === 'taco') {
+      try {
+        const tacoMatches = await searchTacoFoods(query);
+        const details = await Promise.all(tacoMatches.slice(0, 8).map(x => getTacoNutrition(x.id)));
+        results.push(...details);
+      } catch (error) { errors.push('TACO: ' + error.message); }
+    }
+    if (source === 'all' || source === 'off') {
+      try { results.push(...await searchOpenFoodFacts(query)); }
+      catch (error) { errors.push('Open Food Facts: ' + error.message); }
+    }
+    renderFoodSearchResults(results);
+    status.textContent = results.length
+      ? `${results.length} resultado(s). Confira o alimento, a marca e a porção antes de registrar.`
+      : (errors.length ? errors.join(' ') : 'Nenhum alimento encontrado. Confira a grafia ou tente outra fonte.');
+  } catch (error) {
+    status.textContent = 'Não foi possível concluir a busca. Verifique sua conexão e tente novamente.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const searchForm = document.getElementById('foodSearchForm');
+  if (searchForm) searchForm.addEventListener('submit', handleFoodSearch);
+  renderFoodFavorites();
+});
