@@ -1545,6 +1545,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('catalogFoodForm').addEventListener('submit', saveCatalogFood);
   document.getElementById('foodForm').addEventListener('submit', saveMeal);
   document.getElementById('mealPlanForm').addEventListener('submit', saveMealPlan);
+  const planImportButton = document.getElementById('planImportBtn');
+  if (planImportButton) {
+    planImportButton.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      await importMealPlanJSON();
+    });
+  }
   document.getElementById('recipeForm').addEventListener('submit', saveRecipe);
   document.getElementById('workoutForm').addEventListener('submit', saveWorkout);
   document.getElementById('waterGoalForm').addEventListener('submit', saveWaterGoal);
