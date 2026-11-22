@@ -974,13 +974,20 @@ function renderLineChartSVG(containerId, points, unit, strokeColor = '#d48d9d') 
 }
 
 function renderBodyModule() {
+  // O módulo de medidas pode não estar presente em versões reduzidas da interface.
+  const measureSelect = document.getElementById('measureChartSelect');
+  const bodyListEl = document.getElementById('bodyList');
+  const weightChartEl = document.getElementById('weightChartContainer');
+  const measureChartEl = document.getElementById('measureChartContainer');
+  if (!measureSelect || !bodyListEl || !weightChartEl || !measureChartEl) return;
+
   const sorted = [...state.data.body].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
   const weightPts = sorted
     .filter(x => x.weight !== '' && x.weight !== null && x.weight !== undefined && !Number.isNaN(Number(x.weight)))
     .map(x => ({ label: formatDateBR(x.date).slice(0, 5), value: Number(x.weight) }));
 
-  const metricKey = document.getElementById('measureChartSelect').value;
+  const metricKey = measureSelect.value;
   const metricPts = sorted
     .filter(x => x[metricKey] !== '' && x[metricKey] !== null && x[metricKey] !== undefined && !Number.isNaN(Number(x[metricKey])))
     .map(x => ({ label: formatDateBR(x.date).slice(0, 5), value: Number(x[metricKey]) }));
@@ -988,7 +995,7 @@ function renderBodyModule() {
   renderLineChartSVG('weightChartContainer', weightPts, 'kg', '#d48d9d');
   renderLineChartSVG('measureChartContainer', metricPts, 'cm', '#9d6372');
 
-  const listEl = document.getElementById('bodyList');
+  const listEl = bodyListEl;
   const desc = [...sorted].reverse();
   if (!desc.length) {
     listEl.innerHTML = '<small>Nenhuma medição registrada ainda.</small>';
