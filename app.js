@@ -680,7 +680,8 @@ function renderMealPlanFoodGroup(group, planId, optionIndex, groupIndex) {
       : '<small class="muted">Composição nutricional ainda não vinculada à TACO/rótulo.</small>';
     const gramsNote = food.grams ? ` · ${Number(food.grams)} g usados no cálculo` : '';
     const lookupKey = [food.name || '', foodIndex || 0].join('-');
-    return `<div class="plan-food-line">• <strong>${escapeHTML(food.name || 'Alimento')}</strong>${qty ? ' — ' + escapeHTML(qty) : ''}<br>${nutritionText}${nutrition && food.grams ? `<br><small>Quantidade calculada: ${(Number(nutrition.kcal || 0) * Number(food.grams) / 100).toFixed(1)} kcal${gramsNote}</small>` : ''}<br><button class="btn-secondary" type="button" onclick="lookupPlanFoodTaco('${planId}', ${optionIndex}, ${groupIndex}, ${foodIndex})">Buscar na TACO</button><div id="planTacoResults-${planId}-${optionIndex}-${groupIndex}-${foodIndex}"></div></div>`;
+    const amountText = nutrition && food.grams ? `<br><small>Para ${Number(food.grams)} g: ${(Number(nutrition.kcal || 0) * Number(food.grams) / 100).toFixed(1)} kcal · P ${(Number(nutrition.protein || 0) * Number(food.grams) / 100).toFixed(1)} g · C ${(Number(nutrition.carbs || 0) * Number(food.grams) / 100).toFixed(1)} g · G ${(Number(nutrition.fat || 0) * Number(food.grams) / 100).toFixed(1)} g</small>` : '';
+    return `<div class="plan-food-line">• <strong>${escapeHTML(food.name || 'Alimento')}</strong>${qty ? ' — ' + escapeHTML(qty) : ''}<br>${nutritionText}${amountText}<br><button class="btn-secondary" type="button" onclick="lookupPlanFoodTaco('${planId}', ${optionIndex}, ${groupIndex}, ${foodIndex})">Buscar composição (TACO/rótulo)</button><div id="planTacoResults-${planId}-${optionIndex}-${groupIndex}-${foodIndex}"></div></div>`;
   }).join('<div class="muted">OU</div>');
 }
 
